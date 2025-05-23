@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>어드민 도구</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    @font-face {
+      font-family: 'DungGeunMo';
+      src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+    body {
+      background: #111;
+      color: #39ff14;
+      font-family: 'DungGeunMo', monospace;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+    .admin-title {
+      text-align: center;
+      font-size: 2em;
+      margin: 38px 0 24px 0;
+      color: #fff200;
+      text-shadow: 0 0 12px #39ff14, 0 0 24px #fff200;
+    }
+    .admin-btn-bar {
+      position: fixed;
+      right: 12px;
+      bottom: 12px;
+      z-index: 9999;
+      display: flex;
+      gap: 10px;
+    }
+    .retro-btn {
+      background: #181818;
+      color: #39ff14;
+      border: 2px solid #39ff14;
+      border-radius: 8px;
+      font-family: 'DungGeunMo', monospace;
+      font-size: 0.98em;
+      padding: 7px 18px;
+      cursor: pointer;
+      box-shadow: 0 0 8px #39ff1460;
+      transition: background 0.2s, color 0.2s, transform 0.1s;
+      outline: none;
+    }
+    .retro-btn:active, .retro-btn:hover {
+      background: #39ff14;
+      color: #111;
+    }
+    .admin-desc {
+      text-align: center;
+      margin: 0 0 32px 0;
+      color: #39ff14bb;
+      font-size: 1.08em;
+    }
+    .admin-blocked {
+      text-align: center;
+      margin: 80px 0 0 0;
+      color: #ff3c00;
+      font-size: 1.2em;
+      text-shadow: 0 0 8px #fff200, 0 0 16px #ff3c00;
+    }
+    .back-btn {
+      position: fixed;
+      left: 18px;
+      top: 18px;
+      z-index: 1000;
+      font-size: 1em;
+      padding: 7px 22px;
+    }
+  </style>
+</head>
+<body>
+  <button class="retro-btn back-btn" onclick="location.href='/index.html'">← 메인으로</button>
+  <div class="admin-title">어드민 도구</div>
+  <div class="admin-desc">운영에 필요한 어드민 기능만 안전하게 제공합니다.<br>불필요한 데이터 삭제 기능은 제거되었습니다.</div>
+  <div id="admin-blocked" class="admin-blocked" style="display:none;">어드민 권한이 없습니다.</div>
+  <div id="admin-btn-bar" class="admin-btn-bar" style="display:none;gap:18px;">
+    <button id="admin-game-stats" class="retro-btn">게임 수익 통계</button>
+    <button id="admin-money-btn" class="retro-btn" style="font-size:1.08em; padding:10px 32px;">게임머니 충전</button>
+    <button id="admin-player-stats-btn" class="retro-btn" style="font-size:1.08em; padding:10px 32px;">플레이어 통계</button>
+    <!-- 향후 확장: 전체 유저 머니 초기화, 게임 현황 보기 등 -->
+  </div>
+  <div id="admin-stats-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.75);z-index:99999;align-items:center;justify-content:center;">
+    <div style="background:#181818;border:2.5px solid #39ff14;box-shadow:0 0 32px #39ff14cc,0 0 64px #fff20080;padding:32px 24px;border-radius:18px;text-align:center;max-width:90vw;min-width:320px;">
+      <div id="admin-stats-title" style="font-size:1.18em;color:#fff200;text-shadow:0 0 8px #39ff14,0 0 16px #fff200;margin-bottom:18px;">게임 수익 통계</div>
+      <div id="admin-stats-content" style="color:#39ff14;font-size:1.08em;"></div>
+      <button onclick="document.getElementById('admin-stats-modal').style.display='none'" class="retro-btn" style="margin-top:18px;">닫기</button>
+    </div>
+  </div>
+  <div id="admin-player-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.75);z-index:99999;align-items:center;justify-content:center;">
+    <div style="background:#181818;border:2.5px solid #39ff14;box-shadow:0 0 32px #39ff14cc,0 0 64px #fff20080;padding:32px 24px;border-radius:18px;text-align:center;max-width:90vw;min-width:320px;max-height:90vh;overflow-y:auto;">
+      <div id="admin-player-title" style="font-size:1.18em;color:#0ff1ce;text-shadow:0 0 8px #39ff14,0 0 16px #0ff1ce;margin-bottom:18px;">플레이어 목록</div>
+      <div id="admin-player-list" style="color:#39ff14;font-size:1.08em;text-align:left;"></div>
+      <button onclick="document.getElementById('admin-player-modal').style.display='none'" class="retro-btn" style="margin-top:18px;">닫기</button>
+    </div>
+  </div>
+  <div id="admin-player-detail-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);z-index:100000;align-items:center;justify-content:center;">
+    <div style="background:#181818;border:2.5px solid #39ff14;box-shadow:0 0 32px #39ff14cc,0 0 64px #fff20080;padding:32px 24px;border-radius:18px;text-align:center;max-width:90vw;min-width:320px;max-height:90vh;overflow-y:auto;">
+      <div id="admin-player-detail-title" style="font-size:1.18em;color:#fff200;text-shadow:0 0 8px #39ff14,0 0 16px #fff200;margin-bottom:18px;">플레이어 통계</div>
+      <div id="admin-player-detail-content" style="color:#39ff14;font-size:1.08em;"></div>
+      <button onclick="document.getElementById('admin-player-detail-modal').style.display='none'" class="retro-btn" style="margin-top:18px;">닫기</button>
+    </div>
+  </div>
+  <div id="admin-money-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.75);z-index:99999;align-items:center;justify-content:center;">
+    <div style="background:#181818;border:2.5px solid #39ff14;box-shadow:0 0 32px #39ff14cc,0 0 64px #fff20080;padding:32px 24px;border-radius:18px;text-align:center;max-width:90vw;min-width:320px;max-height:90vh;overflow-y:auto;">
+      <div id="admin-money-title" style="font-size:1.18em;color:#0ff1ce;text-shadow:0 0 8px #39ff14,0 0 16px #0ff1ce;margin-bottom:18px;">게임머니 충전</div>
+      <div id="admin-money-list" style="color:#39ff14;font-size:1.08em;text-align:left;"></div>
+      <button onclick="document.getElementById('admin-money-modal').style.display='none'" class="retro-btn" style="margin-top:18px;">닫기</button>
+    </div>
+  </div>
+  <div id="admin-money-charge-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);z-index:100000;align-items:center;justify-content:center;">
+    <div style="background:#181818;border:2.5px solid #39ff14;box-shadow:0 0 32px #39ff14cc,0 0 64px #fff20080;padding:32px 24px;border-radius:18px;text-align:center;max-width:90vw;min-width:320px;max-height:90vh;overflow-y:auto;">
+      <div id="admin-money-charge-title" style="font-size:1.18em;color:#fff200;text-shadow:0 0 8px #39ff14,0 0 16px #fff200;margin-bottom:18px;">게임머니 충전</div>
+      <div id="admin-money-charge-content" style="color:#39ff14;font-size:1.08em;"></div>
+      <button onclick="document.getElementById('admin-money-charge-modal').style.display='none'" class="retro-btn" style="margin-top:18px;">닫기</button>
+    </div>
+  </div>
+  <script>
+    fetch('/api/me').then(r=>r.json()).then(me=>{
+      if(me && me.is_admin) {
+        document.getElementById('admin-btn-bar').style.display = 'flex';
+      } else {
+        document.getElementById('admin-blocked').style.display = '';
+      }
+    });
+    document.getElementById('admin-game-stats').onclick = function() {
+      const modal = document.getElementById('admin-stats-modal');
+      const content = document.getElementById('admin-stats-content');
+      content.innerHTML = '로딩 중...';
+      modal.style.display = 'flex';
+      fetch('/api/admin/game-stats').then(r=>r.json()).then(data=>{
+        if(data && data.success) {
+          let html = '';
+          if(data.baccarat) {
+            html += `<b>바카라</b><br>총 베팅액: ${data.baccarat.totalBet.toLocaleString()}원<br>총 당첨금: ${data.baccarat.totalWin.toLocaleString()}원<br>운영자 수익: ${(data.baccarat.totalBet-data.baccarat.totalWin).toLocaleString()}원<br><br>`;
+          }
+          if(data.graph) {
+            html += `<b>그래프게임</b><br>총 베팅액: ${data.graph.totalBet.toLocaleString()}원<br>총 당첨금: ${data.graph.totalWin.toLocaleString()}원<br>운영자 수익: ${(data.graph.totalBet-data.graph.totalWin).toLocaleString()}원<br><br>`;
+          }
+          if(data.slot) {
+            html += `<b>슬롯머신</b><br>총 베팅액: ${data.slot.totalBet.toLocaleString()}원<br>총 당첨금: ${data.slot.totalWin.toLocaleString()}원<br>운영자 수익: ${(data.slot.totalBet-data.slot.totalWin).toLocaleString()}원<br><br>`;
+          }
+          if(data.horse) {
+            html += `<b>경마 게임</b><br>총 베팅액: ${data.horse.totalBet.toLocaleString()}원<br>총 당첨금: ${data.horse.totalWin.toLocaleString()}원<br>운영자 수익: ${(data.horse.totalBet-data.horse.totalWin).toLocaleString()}원<br><br>`;
+          }
+          content.innerHTML = html || '통계 데이터가 없습니다.';
+        } else {
+          content.innerHTML = '통계 API가 아직 구현되지 않았습니다.';
+        }
+      }).catch(()=>{
+        content.innerHTML = '통계 API 호출 중 오류가 발생했습니다.';
+      });
+    };
+    document.getElementById('admin-money-btn').onclick = function() {
+      const modal = document.getElementById('admin-money-modal');
+      const listDiv = document.getElementById('admin-money-list');
+      listDiv.innerHTML = '로딩 중...';
+      modal.style.display = 'flex';
+      fetch('/api/users').then(r=>r.json()).then(users=>{
+        if(Array.isArray(users)&&users.length){
+          listDiv.innerHTML = users.map(u=>`<div class='money-row' data-uid='${u.id}' style='padding:7px 0;border-bottom:1px solid #39ff1440;cursor:pointer;'><b>${u.username}</b> <span style='color:#0ff1ce;font-size:0.95em;'>(${u.email})</span> <span style='color:#fff200;font-size:0.95em;'>잔액: ${u.money_balance.toLocaleString()}원</span></div>`).join('');
+          listDiv.querySelectorAll('.money-row').forEach(row=>{
+            row.onclick = function(){
+              const userId = this.dataset.uid;
+              const username = this.innerText.split(' ')[0];
+              showMoneyCharge(userId, username);
+            };
+          });
+        }else{
+          listDiv.innerHTML = '플레이어가 없습니다.';
+        }
+      }).catch(()=>{listDiv.innerHTML='불러오기 실패';});
+    };
+    function showMoneyCharge(userId, username) {
+      const modal = document.getElementById('admin-money-charge-modal');
+      const content = document.getElementById('admin-money-charge-content');
+      const title = document.getElementById('admin-money-charge-title');
+      title.textContent = `게임머니 충전 - ${username}`;
+      content.innerHTML = `<input id='charge-amount' type='number' min='1' placeholder='충전 금액(원)' style='font-size:1.1em;padding:8px 12px;border-radius:8px;border:2px solid #39ff14;background:#111;color:#39ff14;width:160px;margin-bottom:12px;'><br><button id='charge-btn' class='retro-btn' style='margin-top:8px;'>충전</button><div id='charge-result' style='margin-top:10px;font-size:1em;'></div>`;
+      modal.style.display = 'flex';
+      document.getElementById('charge-btn').onclick = function() {
+        const amount = parseInt(document.getElementById('charge-amount').value, 10);
+        if(!amount || amount<=0){
+          document.getElementById('charge-result').textContent = '금액을 올바르게 입력하세요.';
+          return;
+        }
+        fetch(`/api/users/${userId}/add-money`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount })
+        }).then(r=>r.json()).then(data=>{
+          if(data && data.success){
+            document.getElementById('charge-result').textContent = '충전 완료!';
+            setTimeout(()=>{modal.style.display='none';document.getElementById('admin-money-modal').style.display='none';}, 900);
+          }else{
+            document.getElementById('charge-result').textContent = data.error||'충전 실패';
+          }
+        }).catch(()=>{document.getElementById('charge-result').textContent='충전 실패';});
+      };
+    }
+    document.getElementById('admin-player-stats-btn').onclick = function() {
+      const modal = document.getElementById('admin-player-modal');
+      const listDiv = document.getElementById('admin-player-list');
+      listDiv.innerHTML = '로딩 중...';
+      modal.style.display = 'flex';
+      fetch('/api/users').then(r=>r.json()).then(users=>{
+        if(Array.isArray(users)&&users.length){
+          listDiv.innerHTML = users.map(u=>`<div class='player-row' data-uid='${u.id}' style='padding:7px 0;border-bottom:1px solid #39ff1440;cursor:pointer;'><b>${u.username}</b> <span style='color:#0ff1ce;font-size:0.95em;'>(${u.email})</span></div>`).join('');
+          listDiv.querySelectorAll('.player-row').forEach(row=>{
+            row.onclick = function(){
+              const userId = this.dataset.uid;
+              showPlayerDetail(userId, this.innerText.split(' ')[0]);
+            };
+          });
+        }else{
+          listDiv.innerHTML = '플레이어가 없습니다.';
+        }
+      }).catch(()=>{listDiv.innerHTML='불러오기 실패';});
+    };
+    function showPlayerDetail(userId, username) {
+      const modal = document.getElementById('admin-player-detail-modal');
+      const content = document.getElementById('admin-player-detail-content');
+      const title = document.getElementById('admin-player-detail-title');
+      title.textContent = `플레이어 통계 - ${username}`;
+      content.innerHTML = '로딩 중...';
+      modal.style.display = 'flex';
+      // 실제 구현 시 /api/admin/player-stats?userId=xx 호출
+      fetch(`/api/admin/player-stats?userId=${userId}`).then(r=>r.json()).then(data=>{
+        if(data && data.success){
+          let html = `<table style='width:100%;color:#39ff14;font-size:1em;margin:0 auto;border-collapse:collapse;'>`;
+          html += `<tr style='color:#fff200;'><th>게임</th><th>총 베팅액</th><th>총 당첨금</th><th>이익/손해</th></tr>`;
+          ['graph','baccarat','slot','horse'].forEach(game=>{
+            if(data[game]){
+              const d = data[game];
+              const diff = d.totalWin - d.totalBet;
+              let gameName = game==='graph'?'그래프':game==='baccarat'?'바카라':game==='slot'?'슬롯머신':'경마 게임';
+              html += `<tr><td style='color:#0ff1ce;'>${gameName}</td><td>${d.totalBet.toLocaleString()}원</td><td>${d.totalWin.toLocaleString()}원</td><td style='color:${diff>=0?'#39ff14':'#ff4b4b'};'>${diff>=0?'+':''}${diff.toLocaleString()}원</td></tr>`;
+            }
+          });
+          html += '</table>';
+          content.innerHTML = html;
+        }else{
+          content.innerHTML = '통계 데이터가 없습니다.';
+        }
+      }).catch(()=>{content.innerHTML='불러오기 실패';});
+    }
+    // 향후 실제 구현된 어드민 기능만 아래에 추가
+  </script>
+</body>
+</html> 

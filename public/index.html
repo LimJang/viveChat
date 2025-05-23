@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>viveGame - 메인</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    @font-face {
+      font-family: 'DungGeunMo';
+      src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+    html, body {
+      box-sizing: border-box;
+      overflow-x: hidden;
+    }
+    *, *::before, *::after {
+      box-sizing: inherit;
+    }
+    body, main, header, .game-cards, .chat-side {
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+    body {
+      background: #181c2b;
+      color: #39ff14;
+      font-family: 'DungGeunMo', monospace;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transition: opacity 0.6s cubic-bezier(.4,1.6,.4,1);
+    }
+    body.page-loaded { opacity: 1; }
+    header {
+      width: 100%;
+      background: #181c2b;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px 8px 18px;
+      box-sizing: border-box;
+      border-bottom: 2px solid #39ff14;
+      box-shadow: 0 2px 12px #39ff1440;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+    }
+    .logo {
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #fff200;
+      text-shadow: 0 0 12px #fff200, 0 0 8px #39ff14;
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-size: 1.08em;
+    }
+    .user-money {
+      color: #0ff1ce;
+      font-weight: bold;
+      text-shadow: 0 0 8px #0ff1ce;
+    }
+    .header-btns {
+      display: flex;
+      gap: 10px;
+    }
+    .header-btns .retro-btn {
+      padding: 6px 18px;
+      font-size: 1em;
+      border-radius: 8px;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 32px;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 32px 0 80px 0;
+    }
+    .game-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      justify-items: center;
+      align-items: stretch;
+      width: 100%;
+    }
+    .game-card {
+      background: #232946;
+      border: 2.5px solid #39ff14;
+      border-radius: 14px;
+      box-shadow: 0 0 14px #39ff1440;
+      padding: 18px 8px 14px 8px;
+      min-width: 0;
+      width: 92%;
+      max-width: 180px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.13s, box-shadow 0.13s;
+      margin: 0 auto;
+    }
+    .game-card:hover {
+      transform: translateY(-4px) scale(1.03);
+      box-shadow: 0 0 18px #0ff1ce, 0 0 8px #fff200;
+      border-color: #0ff1ce;
+    }
+    .game-icon {
+      font-size: 2.1em;
+      margin-bottom: 7px;
+      text-shadow: 0 0 6px #fff200, 0 0 6px #0ff1ce;
+    }
+    .game-title {
+      font-size: 1.05em;
+      font-weight: bold;
+      margin-bottom: 4px;
+      color: #fff;
+      text-shadow: 0 0 6px #39ff14;
+    }
+    .game-desc {
+      font-size: 0.92em;
+      color: #0ff1ce;
+      text-align: center;
+      margin-bottom: 2px;
+    }
+    .chat-side {
+      min-width: 260px;
+      max-width: 340px;
+      width: 100%;
+      background: #222;
+      border: 2px solid #39ff14;
+      border-radius: 16px;
+      box-shadow: 0 0 16px #39ff1460;
+      padding: 18px 12px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      margin-top: 8px;
+      height: 480px;
+    }
+    .chat-header {
+      font-weight: bold;
+      color: #fff200;
+      margin-bottom: 8px;
+      text-align: center;
+      font-size: 1.08em;
+      text-shadow: 0 0 8px #fff200;
+    }
+    #messages {
+      list-style: none;
+      padding: 0;
+      max-height: 320px;
+      min-height: 120px;
+      overflow-y: auto;
+      background: #111;
+      border: 1px solid #39ff14;
+      margin-bottom: 10px;
+      font-size: 1.08em;
+      border-radius: 8px;
+    }
+    #messages li {
+      margin-bottom: 10px;
+      word-break: break-all;
+    }
+    #form {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    #input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1.5px solid #39ff14;
+      background: #111;
+      color: #39ff14;
+      font-size: 1.1em;
+      font-family: 'DungGeunMo', monospace;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .chat-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 1em;
+      background: #39ff14;
+      color: #181c2b;
+      border: none;
+      font-family: 'DungGeunMo', monospace;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s, color 0.2s;
+    }
+    .chat-btn:hover {
+      background: #fff200;
+      color: #181c2b;
+    }
+    .admin {
+      color: #ff3c00;
+      font-weight: bold;
+    }
+    .king {
+      display: inline-block;
+      color: #fff200;
+      background: linear-gradient(90deg, #ff3c00 0%, #fff200 100%);
+      font-weight: bold;
+      font-size: 1.08em;
+      padding: 0 8px;
+      border-radius: 6px;
+      box-shadow: 0 0 12px #fff200, 0 0 24px #ff3c0080;
+      letter-spacing: 2px;
+      animation: king-glow 1.2s infinite alternate;
+      text-shadow: 0 0 8px #fff200, 0 0 16px #ff3c00;
+    }
+    @keyframes king-glow {
+      0% { box-shadow: 0 0 8px #fff200, 0 0 16px #ff3c0080; }
+      100% { box-shadow: 0 0 24px #fff200, 0 0 32px #ff3c00cc; }
+    }
+    .timestamp {
+      color: #39ff14bb;
+      font-size: 0.8em;
+      margin-left: 8px;
+    }
+    @media (max-width: 900px) {
+      main { flex-direction: column; align-items: center; gap: 12px; padding: 12px 0 80px 0; }
+      .game-cards {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+      .chat-side { max-width: 98vw; min-width: 0; width: 98vw; margin-top: 12px; }
+    }
+    @media (max-width: 600px) {
+      header { flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px 4vw 6px 4vw; }
+      .logo { font-size: 1.1em; }
+      .user-info { flex-direction: column; align-items: flex-end; gap: 4px; font-size: 1em; }
+      main { padding: 6px 0 80px 0; }
+      .game-cards {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+      .game-card {
+        min-width: 0;
+        width: 98%;
+        max-width: 120px;
+        padding: 10px 0 8px 0;
+      }
+      .chat-side { max-width: 100vw; min-width: 0; width: 100vw; margin-top: 8px; height: 320px; padding-left: 0; padding-right: 0; }
+    }
+    .retro-btn, .chat-btn, button {
+      font-family: 'DungGeunMo', monospace;
+      background: #111;
+      color: #39ff14;
+      border: 2px solid #39ff14;
+      border-radius: 8px;
+      font-size: 1.08em;
+      padding: 10px 28px;
+      cursor: pointer;
+      box-shadow: 0 0 8px #39ff1460;
+      transition: background 0.2s, color 0.2s, border 0.2s, transform 0.1s;
+      outline: none;
+      font-weight: bold;
+    }
+    .retro-btn:active, .chat-btn:active, button:active {
+      background: #39ff14;
+      color: #111;
+      transform: scale(0.96);
+      box-shadow: 0 0 0 #39ff1460;
+      border-color: #fff200;
+    }
+    .retro-btn:hover, .chat-btn:hover, button:hover {
+      background: #39ff14;
+      color: #111;
+      border-color: #0ff1ce;
+    }
+    .online-users-bar {
+      margin-top: 8px;
+      margin-bottom: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      align-items: center;
+      font-size: 1.05em;
+      color: #39ff14;
+      text-shadow: 0 0 6px #39ff14;
+      background: #232946;
+      border-radius: 8px;
+      padding: 7px 16px 7px 12px;
+      box-shadow: 0 0 8px #39ff1440;
+      min-height: 32px;
+      max-width: 100vw;
+      overflow-x: auto;
+    }
+    .online-user {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: bold;
+      color: #0ff1ce;
+      background: #181c2b;
+      border-radius: 6px;
+      padding: 2px 10px 2px 8px;
+      box-shadow: 0 0 4px #0ff1ce40;
+    }
+    .online-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #39ff14;
+      margin-right: 3px;
+      box-shadow: 0 0 6px #39ff14cc;
+    }
+    .room-users-bar {
+      margin-top: 4px;
+      margin-bottom: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      align-items: center;
+      font-size: 1.02em;
+      color: #fff200;
+      text-shadow: 0 0 6px #fff200;
+      background: #232946;
+      border-radius: 8px;
+      padding: 5px 14px 5px 10px;
+      box-shadow: 0 0 8px #fff20040;
+      min-height: 28px;
+      max-width: 100vw;
+      overflow-x: auto;
+    }
+    .room-user {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: bold;
+      color: #fff;
+      background: #0ff1ce33;
+      border-radius: 6px;
+      padding: 2px 10px 2px 8px;
+      box-shadow: 0 0 4px #0ff1ce40;
+    }
+    .room-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #fff200;
+      margin-right: 3px;
+      box-shadow: 0 0 6px #fff200cc;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">🎮 viveGame</div>
+    <div id="online-users-bar" class="online-users-bar" style="display:none;"></div>
+    <div id="room-users-bar" class="room-users-bar" style="display:none;"></div>
+    <div class="user-info">
+      <span id="welcome"></span>
+      <span class="user-money" id="my-money" style="display:none;"></span>
+      <div class="header-btns">
+        <button id="admin-tools-btn" class="retro-btn" style="display:none;">어드민 도구</button>
+        <button id="logout-btn" class="retro-btn">로그아웃</button>
+      </div>
+    </div>
+  </header>
+  <main>
+    <div class="game-cards">
+      <div class="game-card" id="card-graph">
+        <div class="game-icon">📈</div>
+        <div class="game-title">그래프 게임</div>
+        <div class="game-desc">실시간 배당, 스릴 넘치는 버스트!</div>
+      </div>
+      <div class="game-card" id="card-baccarat">
+        <div class="game-icon">🃏</div>
+        <div class="game-title">바카라</div>
+        <div class="game-desc">실제 카지노 느낌의 카드 게임</div>
+      </div>
+      <div class="game-card" id="card-slot">
+        <div class="game-icon">🎰</div>
+        <div class="game-title">슬롯머신</div>
+        <div class="game-desc">한방 역전! 3릴 슬롯머신</div>
+      </div>
+      <div class="game-card" id="card-horse">
+        <div class="game-icon">🐎</div>
+        <div class="game-title">경마 게임</div>
+        <div class="game-desc">실시간 베팅, 스피드 경주!</div>
+      </div>
+    </div>
+    <div class="chat-side">
+      <div class="chat-header">💬 실시간 채팅</div>
+      <div id="user-count" style="text-align:right;color:#39ff14;font-size:1.1em;margin-bottom:8px;"></div>
+      <div id="admin-panel" style="display:none; margin-bottom:8px;">
+        <button id="clear-btn" class="retro-btn">채팅지우기</button>
+      </div>
+      <ul id="messages"></ul>
+      <form id="form" autocomplete="off">
+        <input id="input" autocomplete="off" placeholder="메시지를 입력하세요...">
+        <button id="send" class="chat-btn">전송</button>
+      </form>
+    </div>
+  </main>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // 온라인 유저 목록 표시
+    const onlineUsersBar = document.getElementById('online-users-bar');
+    let myUsername = '';
+    let isAdmin = false;
+    fetch('/api/me').then(async res => {
+      if (res.status !== 200) {
+        location.href = '/login.html';
+        return;
+      }
+      const user = await res.json();
+      document.getElementById('welcome').textContent = `환영합니다, ${user.username}님`;
+      myUsername = user.username;
+      isAdmin = !!user.is_admin;
+      if (isAdmin) {
+        document.getElementById('admin-panel').style.display = '';
+        document.getElementById('admin-money-btn-wrap').style.display = '';
+      } else {
+        // 일반 사용자: 본인 게임머니 표시
+        fetch('/api/users/me').then(r=>r.json()).then(data=>{
+          if(data.money_balance!==undefined){
+            const el=document.getElementById('my-money');
+            el.textContent = `보유 머니: ${data.money_balance.toLocaleString()}원`;
+            el.style.display='';
+          }
+        }).catch((err)=>{
+          // ... 기타 에러 핸들링 ...
+        });
+      }
+      // 온라인 유저바 표시 (어드민 포함 항상)
+      onlineUsersBar.style.display = '';
+    });
+    // 로그아웃 기능
+    document.getElementById('logout-btn').onclick = async function() {
+      await fetch('/api/logout', { method: 'POST' });
+      location.href = '/login.html';
+    };
+    // 채팅 기능
+    const socket = io();
+    const messages = document.getElementById('messages');
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
+    const userCountDiv = document.getElementById('user-count');
+    const clearBtn = document.getElementById('clear-btn');
+    function addMessage(msg) {
+      const li = document.createElement('li');
+      let nickLabel = '';
+      if (msg.sender === 'admin') {
+        nickLabel = `<span class=\"king\">[[KING]]</span> `;
+      } else {
+        nickLabel = msg.nickname ? `<span style=\"color:#39ff14;font-weight:bold;\">[${msg.nickname}]</span> ` : '<span style=\"color:#39ff14;font-weight:bold;\">[익명]</span> ';
+      }
+      li.innerHTML = `${nickLabel}${msg.text} <span class=\"timestamp\">${new Date(msg.timestamp).toLocaleTimeString()}</span>`;
+      messages.appendChild(li);
+      messages.scrollTop = messages.scrollHeight;
+    }
+    socket.on('user count', (count) => {
+      userCountDiv.textContent = `현재 접속자: ${count}명`;
+    });
+    socket.on('init', (msgs) => {
+      messages.innerHTML = '';
+      msgs.forEach(addMessage);
+      messages.scrollTop = messages.scrollHeight;
+    });
+    socket.on('chat message', (msg) => {
+      addMessage(msg);
+    });
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (input.value) {
+        socket.emit('chat message', input.value);
+        input.value = '';
+      }
+    });
+    if (clearBtn) {
+      clearBtn.onclick = function() {
+        if (confirm('정말 모든 채팅을 삭제하시겠습니까?')) {
+          messages.innerHTML = '';
+          socket.emit('clear messages');
+        }
+      };
+    }
+    // 어드민 게임머니 관리 버튼 클릭 시 이동
+    const adminMoneyBtn = document.getElementById('admin-money-btn');
+    if (adminMoneyBtn) {
+      adminMoneyBtn.onclick = function() {
+        location.href = '/admin-users.html';
+      };
+    }
+    // 어드민만 어드민 도구 버튼 표시
+    fetch('/api/me').then(r=>r.json()).then(me=>{
+      if(me && me.is_admin) {
+        document.getElementById('admin-tools-btn').style.display = '';
+      }
+    });
+    document.getElementById('admin-tools-btn').onclick = function() {
+      location.href = '/admin.html';
+    };
+    // 페이지 전환 효과
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => document.body.classList.add('page-loaded'), 10);
+    });
+    function pageTransitionAndGo(href) {
+      document.body.classList.remove('page-loaded');
+      setTimeout(() => {
+        location.href = href;
+      }, 400);
+    }
+    // 게임 카드 클릭 이동
+    document.getElementById('card-graph').onclick = function() {
+      location.href = '/graph.html';
+    };
+    document.getElementById('card-baccarat').onclick = function() {
+      location.href = '/baccarat.html';
+    };
+    document.getElementById('card-slot').onclick = function() {
+      location.href = '/slot.html';
+    };
+    document.getElementById('card-horse').onclick = function() {
+      location.href = '/horse.html';
+    };
+    // 온라인 유저 목록 실시간 표시
+    socket.on('online users', (users) => {
+      if (!Array.isArray(users)) return;
+      onlineUsersBar.innerHTML = users.map(u => `<span class='online-user'><span class='online-dot'></span>${u}</span>`).join('');
+    });
+    // 방 참가자 목록 표시
+    const roomUsersBar = document.getElementById('room-users-bar');
+    socket.emit('join room', { room: 'main' });
+    socket.on('room users', (users) => {
+      if (roomUsersBar) {
+        roomUsersBar.style.display = '';
+        const uniqueUsers = [...new Set(users)];
+        roomUsersBar.innerHTML = uniqueUsers.map(u => `<span class='room-user'><span class='room-dot'></span>${u}</span>`).join('');
+      }
+    });
+  </script>
+</body>
+</html> 

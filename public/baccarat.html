@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>바카라 게임</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    @font-face {
+      font-family: 'DungGeunMo';
+      src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+    body {
+      background: #111;
+      color: #39ff14;
+      font-family: 'DungGeunMo', monospace;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      opacity: 0;
+      transition: opacity 0.6s cubic-bezier(.4,1.6,.4,1);
+    }
+    body.page-loaded { opacity: 1; }
+    #baccarat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 18px 8px 18px;
+      font-size: 1.1em;
+      text-shadow: 0 0 8px #39ff14;
+      position: relative;
+    }
+    #back-to-main {
+      position: static;
+      left: unset; top: unset; transform: none;
+      z-index: 200;
+      font-size: 1em;
+      padding: 6px 24px;
+    }
+    #round-info { font-size: 1.1em; }
+    #my-money { font-size: 1.08em; }
+    #money-refresh { background: none; border: none; color: #39ff14; font-size: 1.1em; cursor: pointer; }
+    #baccarat-table {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 auto 12px auto;
+      max-width: 600px;
+      background: #181818;
+      border: 2px solid #39ff14;
+      border-radius: 12px;
+      box-shadow: 0 0 16px #39ff1460;
+      padding: 18px 0 12px 0;
+    }
+    .card-area {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      margin-bottom: 12px;
+    }
+    .player-cards, .banker-cards {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .card {
+      position: relative;
+      width: 48px; height: 68px;
+      perspective: 600px;
+      background: none;
+      border: none;
+      box-shadow: none;
+      margin: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card-inner {
+      width: 100%; height: 100%;
+      position: relative;
+      transition: transform 0.5s cubic-bezier(.4,1.6,.4,1);
+      transform-style: preserve-3d;
+    }
+    .card.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+    .card-face {
+      position: absolute;
+      width: 100%; height: 100%;
+      backface-visibility: hidden;
+      border-radius: 8px;
+      border: 2.5px solid #39ff14;
+      box-shadow: 0 0 8px #39ff14cc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5em;
+      font-family: 'DungGeunMo', monospace;
+      z-index: 1;
+    }
+    .card-back {
+      background: #222 url('https://cdn.jsdelivr.net/gh/ogf2002/vive-assets@main/card-back.png') center/cover no-repeat;
+      color: #39ff14;
+      z-index: 2;
+    }
+    .card-front {
+      background: #fff;
+      color: #222;
+      transform: rotateY(180deg);
+      z-index: 3;
+    }
+    .label {
+      margin-top: 4px;
+      font-size: 1.08em;
+      color: #39ff14bb;
+      text-shadow: 0 0 8px #39ff14;
+    }
+    .vs {
+      font-size: 1.5em;
+      color: #fff200;
+      text-shadow: 0 0 8px #39ff14, 0 0 16px #fff200;
+      margin: 0 18px;
+    }
+    #result-text {
+      text-align: center;
+      font-size: 1.3em;
+      font-weight: bold;
+      margin: 8px 0 0 0;
+      color: #fff200;
+      text-shadow: 0 0 8px #39ff14, 0 0 16px #fff200;
+      min-height: 32px;
+    }
+    #bet-panel {
+      text-align: center;
+      margin: 18px 0 0 0;
+    }
+    #bet-amount {
+      font-family: 'DungGeunMo', monospace;
+      font-size: 1.1em;
+      padding: 8px;
+      border: 1.5px solid #39ff14;
+      background: #111;
+      color: #39ff14;
+      border-radius: 0;
+      outline: none;
+      width: 120px;
+      margin-right: 8px;
+    }
+    .bet-btn {
+      background: #111;
+      color: #39ff14;
+      border: 2px solid #39ff14;
+      border-radius: 0;
+      font-family: 'DungGeunMo', monospace;
+      font-size: 1.1em;
+      padding: 10px 24px;
+      cursor: pointer;
+      box-shadow: 0 0 8px #39ff1460;
+      transition: background 0.2s, color 0.2s, transform 0.1s;
+      margin: 0 4px;
+      outline: none;
+    }
+    .bet-btn:active, .bet-btn:hover {
+      background: #39ff14;
+      color: #111;
+    }
+    #bet-status {
+      text-align: center;
+      font-size: 1.1em;
+      margin-top: 10px;
+      min-height: 24px;
+    }
+    #baccarat-history-bar {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      background: #181818;
+      color: #39ff14;
+      font-family: 'DungGeunMo', monospace;
+      font-size: 1em;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 10px 0 8px 0;
+      border-top: 2px solid #39ff14;
+      box-shadow: 0 -2px 12px #39ff1460;
+      gap: 12px;
+      overflow-x: auto;
+    }
+    .history-item {
+      min-width: 110px;
+      padding: 2px 8px;
+      background: #222;
+      border-radius: 8px;
+      border: 1px solid #39ff14;
+      display: inline-block;
+      text-align: center;
+      margin-right: 6px;
+    }
+    .history-player { color: #39ff14; }
+    .history-banker { color: #ff3c00; }
+    .history-tie { color: #00eaff; }
+    @media (max-width: 700px) {
+      #baccarat-header { font-size: 0.98em; flex-direction: column; gap: 6px; }
+      #baccarat-table { padding: 8px 0 4px 0; }
+      .card { width: 36px; height: 52px; font-size: 1.1em; }
+      .vs { font-size: 1.1em; margin: 0 8px; }
+      #baccarat-history-bar { font-size: 0.95em; }
+    }
+    @media (max-width: 600px) {
+      #baccarat-header {
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 12px 4vw 4px 4vw;
+      }
+      #back-to-main {
+        position: absolute;
+        left: 8px; top: 8px;
+        transform: none;
+        font-size: 1em;
+        padding: 6px 16px;
+        z-index: 300;
+      }
+      #round-info, #my-money {
+        text-align: center;
+        width: 100%;
+        margin-top: 8px;
+      }
+    }
+    .bet-submit-strong {
+      background: linear-gradient(90deg, #39ff14 0%, #fff200 100%);
+      color: #111;
+      border: 2.5px solid #fff200;
+      box-shadow: 0 0 24px #39ff14, 0 0 48px #fff200cc;
+      font-weight: bold;
+      text-shadow: 0 0 8px #fff200, 0 0 16px #39ff14;
+      letter-spacing: 1.5px;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s, filter 0.2s;
+    }
+    .bet-submit-strong:active, .bet-submit-strong:hover {
+      background: #fff200;
+      color: #111;
+      filter: brightness(1.2);
+      box-shadow: 0 0 32px #fff200, 0 0 64px #39ff14cc;
+    }
+    .bet-submit-strong:disabled {
+      background: #222 !important;
+      color: #888 !important;
+      border: 2.5px solid #444 !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+      filter: grayscale(0.7) brightness(0.7);
+      cursor: not-allowed;
+    }
+    .retro-btn, .bet-submit-strong {
+      font-family: 'DungGeunMo', monospace !important;
+      font-weight: normal;
+      letter-spacing: 1.5px;
+    }
+    .result-flash {
+      animation: flash-result 0.18s linear 0s 4 alternate;
+    }
+    @keyframes flash-result {
+      0% { filter: brightness(1.2) drop-shadow(0 0 8px #fff200); }
+      100% { filter: brightness(2.5) drop-shadow(0 0 24px #fff200) drop-shadow(0 0 32px #39ff14); }
+    }
+    .room-users-bar {
+      position: static;
+      width: 100%;
+      margin: 8px 0 0 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 12px #39ff1440;
+      background: #232946;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      align-items: center;
+      font-size: 1.02em;
+      color: #39ff14;
+      text-shadow: 0 0 6px #39ff14;
+      padding: 8px 14px 8px 10px;
+      min-height: 32px;
+      max-width: 100vw;
+      overflow-x: auto;
+    }
+    .room-user {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: bold;
+      color: #fff;
+      background: #0ff1ce33;
+      border-radius: 6px;
+      padding: 2px 10px 2px 8px;
+      box-shadow: 0 0 4px #0ff1ce40;
+    }
+    .room-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #39ff14;
+      margin-right: 3px;
+      box-shadow: 0 0 6px #39ff14cc;
+    }
+    @media (max-width: 600px) {
+      .room-users-bar { font-size: 0.95em; padding: 6px 4vw 6px 2vw; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+  <div id="baccarat-header">
+    <span id="round-info">라운드 #-- | 베팅 타임 --초</span>
+    <span id="my-money">보유 머니: --원 <button id="money-refresh">🔄</button></span>
+    <button id="back-to-main" class="retro-btn bet-submit-strong">← 메인으로</button>
+  </div>
+  <div id="room-users-bar" class="room-users-bar" style="display:none;"></div>
+  <div id="baccarat-table">
+    <div class="card-area">
+      <div class="player-cards">
+        <div class="card" id="player-card1"><div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front"></div></div></div>
+        <div class="card" id="player-card2"><div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front"></div></div></div>
+        <div class="card" id="player-card3"><div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front"></div></div></div>
+        <div class="label">플레이어</div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="banker-cards">
+        <div class="card" id="banker-card1"><div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front"></div></div></div>
+        <div class="card" id="banker-card2"><div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front"></div></div></div>
+        <div class="card" id="banker-card3"><div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front"></div></div></div>
+        <div class="label">뱅커</div>
+      </div>
+    </div>
+    <div id="result-text"></div>
+  </div>
+  <div id="result-stats" style="text-align:center;margin:12px 0 18px 0;font-size:1.08em;color:#fff200;text-shadow:0 0 8px #39ff14,0 0 16px #fff200;"></div>
+  <div id="bet-panel">
+    <input id="bet-amount" type="number" min="1000" max="1000000" step="1000" placeholder="베팅금액">
+    <div id="bet-type-group" style="display:flex;justify-content:center;gap:8px;margin:12px 0;">
+      <button id="bet-player" class="bet-btn" type="button">플레이어</button>
+      <button id="bet-tie" class="bet-btn" type="button">타이</button>
+      <button id="bet-banker" class="bet-btn" type="button">뱅커</button>
+    </div>
+    <button id="bet-submit" class="retro-btn bet-submit-strong" style="width:100%;max-width:320px;font-size:1.15em;padding:12px 0;margin:8px 0 0 0;">베팅하기</button>
+    <div id="bet-explain" style="margin-top:8px;font-size:0.98em;color:#39ff14bb;"></div>
+    <div id="bet-status"></div>
+  </div>
+  <div id="baccarat-history-bar"></div>
+  <div id="custom-confirm" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.75);z-index:99999;align-items:center;justify-content:center;">
+    <div id="custom-confirm-box" style="background:#181818;border:2.5px solid #39ff14;box-shadow:0 0 32px #39ff14cc,0 0 64px #fff20080;padding:32px 24px;border-radius:18px;text-align:center;max-width:90vw;">
+      <div id="custom-confirm-msg" style="font-size:1.18em;color:#fff200;text-shadow:0 0 8px #39ff14,0 0 16px #fff200;margin-bottom:18px;">이 사이트 테마로 베팅하시겠습니까?</div>
+      <button id="custom-confirm-yes" class="retro-btn bet-submit-strong" style="margin:0 18px 0 0;min-width:80px;">예</button>
+      <button id="custom-confirm-no" class="retro-btn" style="min-width:80px;">아니요</button>
+    </div>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // 페이지 로딩 효과
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => document.body.classList.add('page-loaded'), 10);
+    });
+    // socket.io 연결
+    const socket = io();
+    // 내 머니 표시 및 새로고침
+    function updateMyMoney() {
+      fetch('/api/users/me').then(r=>r.json()).then(data=>{
+        if(data.money_balance!==undefined){
+          document.getElementById('my-money').innerHTML = `보유 머니: ${data.money_balance.toLocaleString()}원 <button id=\"money-refresh\">🔄</button>`;
+        }
+      });
+    }
+    updateMyMoney();
+    document.body.addEventListener('click', function(e){
+      if(e.target && e.target.id==='money-refresh'){
+        updateMyMoney();
+      }
+    });
+    // 베팅 타임/라운드 정보/카드/결과 표시
+    let baccaratState = { round: '--', seconds: '--', player: [], banker: [], result: '', player_point: '', banker_point: '' };
+    function updateRoundInfo() {
+      document.getElementById('round-info').textContent = `라운드 #${baccaratState.round} | 베팅 타임 ${baccaratState.seconds}초`;
+    }
+    function updateCardsFlipped(revealed) {
+      const player = baccaratState.player;
+      const banker = baccaratState.banker;
+      [1,2,3].forEach((i,idx)=>{
+        const card = document.getElementById('player-card'+i);
+        const inner = card.querySelector('.card-inner');
+        const front = card.querySelector('.card-front');
+        const back = card.querySelector('.card-back');
+        if(player[idx]) {
+          card.style.visibility = 'visible';
+          front.textContent = player[idx];
+        } else {
+          card.style.visibility = 'hidden';
+          front.textContent = '';
+        }
+        if(revealed[idx]) card.classList.add('flipped');
+        else card.classList.remove('flipped');
+      });
+      [1,2,3].forEach((i,idx)=>{
+        const card = document.getElementById('banker-card'+i);
+        const inner = card.querySelector('.card-inner');
+        const front = card.querySelector('.card-front');
+        const back = card.querySelector('.card-back');
+        if(banker[idx]) {
+          card.style.visibility = 'visible';
+          front.textContent = banker[idx];
+        } else {
+          card.style.visibility = 'hidden';
+          front.textContent = '';
+        }
+        if(revealed[3+idx]) card.classList.add('flipped');
+        else card.classList.remove('flipped');
+      });
+    }
+    let resultAnimating = false;
+    let roundStartPending = null;
+    function updateResult(show) {
+      let txt = '';
+      if(!show) {
+        document.getElementById('result-text').textContent = '';
+        document.getElementById('result-text').classList.remove('result-flash');
+        return;
+      }
+      if(baccaratState.result==='player') txt = '플레이어 승!';
+      else if(baccaratState.result==='banker') txt = '뱅커 승!';
+      else if(baccaratState.result==='tie') txt = '타이!';
+      document.getElementById('result-text').textContent = txt;
+      document.getElementById('result-text').classList.add('result-flash');
+      setTimeout(()=>{
+        document.getElementById('result-text').classList.remove('result-flash');
+      }, 1500);
+      // 승리(내가 돈을 땄을 때) confetti 축하 효과
+      if(baccaratState.result==='player' || baccaratState.result==='banker' || baccaratState.result==='tie'){
+        confetti({
+          particleCount: 50,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ['#fff200', '#39ff14', '#00eaff', '#ff3c00']
+        });
+      }
+    }
+    function handleRoundStart(data) {
+      baccaratState.round = data.gameId;
+      baccaratState.seconds = data.seconds;
+      baccaratState.player = [];
+      baccaratState.banker = [];
+      baccaratState.result = '';
+      baccaratState.player_point = '';
+      baccaratState.banker_point = '';
+      updateRoundInfo();
+      updateCardsFlipped([false,false,false,false,false,false]);
+      updateResult(false);
+      setBettingEnabled(true);
+      document.getElementById('bet-status').textContent = '';
+    }
+    socket.on('baccarat_round_start', data => {
+      baccaratState.round = data.gameId;
+      baccaratState.seconds = data.seconds;
+      baccaratState.player = [];
+      baccaratState.banker = [];
+      baccaratState.result = '';
+      baccaratState.player_point = '';
+      baccaratState.banker_point = '';
+      updateRoundInfo();
+      updateCardsFlipped([false,false,false,false,false,false]);
+      updateResult(false);
+      setBettingEnabled(true);
+      document.getElementById('bet-status').textContent = '';
+    });
+    socket.on('baccarat_betting_phase', data => {
+      baccaratState.seconds = data.seconds;
+      updateRoundInfo();
+      if(data.seconds <= 0) setBettingEnabled(false);
+    });
+    socket.on('baccarat_result', data => {
+      baccaratState.player = data.player;
+      baccaratState.banker = data.banker;
+      baccaratState.player_point = data.player_point;
+      baccaratState.banker_point = data.banker_point;
+      baccaratState.result = data.result;
+      setBettingEnabled(false);
+      updateResult(false); // 결과 숨김
+      // 카드 순차 오픈
+      const total = 6;
+      let revealed = [false,false,false,false,false,false];
+      updateCardsFlipped(revealed);
+      let openOrder = [0,3,1,4,2,5]; // p1,b1,p2,b2,p3,b3
+      let count = 0;
+      // 결과 표시 fallback: 5초 후 무조건 결과 표시
+      let resultTimeout = setTimeout(() => {
+        updateResult(true);
+      }, 5000);
+      function openNext() {
+        if(count>=total) {
+          clearTimeout(resultTimeout); // fallback 타이머 해제
+          setTimeout(()=>{ updateResult(true); }, 400);
+          return;
+        }
+        let idx = openOrder[count];
+        // 없는 카드면 count만 증가
+        if(idx<3 && !baccaratState.player[idx]) { count++; openNext(); return; }
+        if(idx>=3 && !baccaratState.banker[idx-3]) { count++; openNext(); return; }
+        revealed[idx] = true;
+        updateCardsFlipped(revealed);
+        count++;
+        if(count<total) setTimeout(openNext, 1000);
+        else {
+          // 마지막 카드 오픈 후에도 fallback 해제
+          clearTimeout(resultTimeout);
+          setTimeout(()=>{ updateResult(true); }, 400);
+        }
+      }
+      openNext();
+      // 결과 표시 후 히스토리 갱신 시 updateResultStats 호출
+      fetch('/api/baccarat/history').then(r=>r.json()).then(list=>{
+        if(Array.isArray(list)) updateResultStats(list);
+      });
+    });
+    socket.on('baccarat_history_update', list => {
+      if(Array.isArray(list)) {
+        renderHistory(list);
+        updateResultStats(list);
+      }
+    });
+    socket.on('disconnect', () => {
+      console.warn('소켓 연결 끊김! 2초 후 새로고침');
+      setTimeout(()=>location.reload(), 2000);
+    });
+    // 베팅 버튼/입력 상태 동기화
+    let selectedBetType = 'player';
+    const betExplainMap = {
+      player: '플레이어에 베팅 시 승리하면 <b>2배</b>의 이익을 얻습니다.',
+      banker: '뱅커에 베팅 시 승리하면 <b>1.95배</b>의 이익을 얻습니다.',
+      tie: '타이에 베팅 시 승리하면 <b>8배</b>의 이익을 얻습니다.'
+    };
+    function selectBetType(type) {
+      selectedBetType = type;
+      ['player','tie','banker'].forEach(t => {
+        const btn = document.getElementById('bet-' + t);
+        if (t === type) {
+          btn.style.background = '#39ff14';
+          btn.style.color = '#111';
+          btn.style.boxShadow = '0 0 16px #39ff14cc';
+          btn.setAttribute('aria-pressed','true');
+        } else {
+          btn.style.background = '#111';
+          btn.style.color = '#39ff14';
+          btn.style.boxShadow = '0 0 8px #39ff1460';
+          btn.setAttribute('aria-pressed','false');
+        }
+      });
+      document.getElementById('bet-explain').innerHTML = betExplainMap[type] || '';
+    }
+    // 초기 선택(플레이어)
+    selectBetType('player');
+    document.getElementById('bet-player').onclick = ()=>selectBetType('player');
+    document.getElementById('bet-tie').onclick = ()=>selectBetType('tie');
+    document.getElementById('bet-banker').onclick = ()=>selectBetType('banker');
+    // 커스텀 confirm 함수
+    function showCustomConfirm(msg, onYes, onNo) {
+      document.getElementById('custom-confirm-msg').textContent = msg;
+      document.getElementById('custom-confirm').style.display = 'flex';
+      function cleanup() {
+        document.getElementById('custom-confirm').style.display = 'none';
+        document.getElementById('custom-confirm-yes').onclick = null;
+        document.getElementById('custom-confirm-no').onclick = null;
+      }
+      document.getElementById('custom-confirm-yes').onclick = function() {
+        cleanup();
+        if(onYes) onYes();
+      };
+      document.getElementById('custom-confirm-no').onclick = function() {
+        cleanup();
+        if(onNo) onNo();
+      };
+    }
+    // 베팅하기 버튼 클릭 시 커스텀 confirm 후 베팅 실행
+    document.getElementById('bet-submit').onclick = function(e) {
+      e.preventDefault();
+      if(!selectedBetType) return alert('베팅 타입을 선택하세요.');
+      const amount = parseInt(document.getElementById('bet-amount').value,10);
+      if(!amount) return alert('베팅금액 입력');
+      showCustomConfirm(`${amount.toLocaleString()}원 베팅하시겠습니까?`, function() {
+        fetch('/api/baccarat/bet', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({bet_type:selectedBetType, bet_amount:amount})
+        }).then(r=>r.json()).then(data=>{
+          if (data && data.success){
+            confetti({
+              particleCount: 30,
+              spread: 60,
+              origin: { y: 0.7 },
+              emojis: ['💡', '⭐', '✨', '🧠'],
+              scalar: 1.2,
+              shapes: ['emoji']
+            });
+            // 텍스트 효과
+            const msg = document.createElement('div');
+            msg.textContent = '현명한 선택!';
+            msg.style.position = 'fixed';
+            msg.style.left = '50%';
+            msg.style.top = '55%';
+            msg.style.transform = 'translate(-50%, -50%)';
+            msg.style.fontSize = '2em';
+            msg.style.color = '#fff200';
+            msg.style.textShadow = '0 0 12px #39ff14, 0 0 24px #fff200';
+            msg.style.zIndex = 9999;
+            msg.style.opacity = 1;
+            msg.style.transition = 'opacity 1.2s, top 1.2s';
+            document.body.appendChild(msg);
+            setTimeout(() => {
+              msg.style.opacity = 0;
+              msg.style.top = '45%';
+              setTimeout(() => msg.remove(), 1200);
+            }, 800);
+            document.getElementById('bet-status').textContent = '베팅이 완료되었습니다!';
+            updateMyMoney();
+            // 베팅 성공 시 버튼/입력/포지션 비활성화 및 텍스트 변경
+            setBettingEnabled(false);
+          }else{
+            document.getElementById('bet-status').textContent = data && data.error ? data.error : '베팅 실패';
+            alert(data && data.error ? data.error : '베팅 실패');
+            // 베팅 타임이 아니라면 버튼 비활성화
+            if(data && data.error && data.error.includes('베팅 시간이 아닙니다')) {
+              setBettingEnabled(false);
+            }
+          }
+        }).catch((err)=>{
+          document.getElementById('bet-status').textContent = '베팅 실패';
+        });
+      }, function() {
+        // 아니요: 아무 동작 없음
+      });
+    };
+    // form submit 등 엔터로 인한 submit 방지
+    document.getElementById('bet-panel').addEventListener('submit', function(e) { e.preventDefault(); });
+    document.getElementById('bet-amount').addEventListener('keydown', function(e){ if(e.key==='Enter') e.preventDefault(); });
+    // 모바일 버튼 크기 개선
+    function updateMobileBetBtnStyle() {
+      if(window.innerWidth<600){
+        document.querySelectorAll('.bet-btn').forEach(btn=>{
+          btn.style.fontSize = '1.15em';
+          btn.style.padding = '14px 0';
+          btn.style.width = '32vw';
+          btn.style.margin = '0 2vw';
+        });
+        document.getElementById('bet-submit').style.fontSize = '1.18em';
+        document.getElementById('bet-submit').style.padding = '16px 0';
+      } else {
+        document.querySelectorAll('.bet-btn').forEach(btn=>{
+          btn.style.fontSize = '1.1em';
+          btn.style.padding = '10px 24px';
+          btn.style.width = '';
+          btn.style.margin = '0 4px';
+        });
+        document.getElementById('bet-submit').style.fontSize = '1.15em';
+        document.getElementById('bet-submit').style.padding = '12px 0';
+      }
+    }
+    window.addEventListener('resize', updateMobileBetBtnStyle);
+    updateMobileBetBtnStyle();
+    // 히스토리 표시
+    function renderHistory(list) {
+      const bar = document.getElementById('baccarat-history-bar');
+      bar.innerHTML = list.map(r=>{
+        let colorClass = r.result==='player' ? 'history-player' : (r.result==='banker' ? 'history-banker' : 'history-tie');
+        return `<div class='history-item ${colorClass}'>
+          <div>라운드 <b>#${r.id}</b></div>
+          <div>${r.result==='player'?'플레이어':r.result==='banker'?'뱅커':'타이'}</div>
+          <div style='font-size:0.95em;'>${r.player_point} : ${r.banker_point}</div>
+        </div>`;
+      }).join('');
+    }
+    // (최초 진입 시 서버 API로 히스토리 1회 불러오기)
+    fetch('/api/baccarat/history').then(r=>r.json()).then(list=>{
+      if(Array.isArray(list)) renderHistory(list);
+    });
+    // 메인으로 버튼
+    function pageTransitionAndGo(href) {
+      document.body.classList.remove('page-loaded');
+      setTimeout(() => {
+        location.href = href;
+      }, 400);
+    }
+    document.getElementById('back-to-main').onclick = function() {
+      pageTransitionAndGo('/index.html');
+    };
+    function setBettingEnabled(enabled) {
+      document.getElementById('bet-amount').disabled = !enabled;
+      document.getElementById('bet-player').disabled = !enabled;
+      document.getElementById('bet-tie').disabled = !enabled;
+      document.getElementById('bet-banker').disabled = !enabled;
+      const betBtn = document.getElementById('bet-submit');
+      betBtn.disabled = !enabled;
+      if (enabled) {
+        betBtn.textContent = '베팅하기';
+      } else {
+        betBtn.textContent = '베팅완료';
+        ['player','tie','banker'].forEach(t => {
+          document.getElementById('bet-' + t).setAttribute('aria-pressed','false');
+        });
+      }
+    }
+    function updateResultStats(list) {
+      if (!Array.isArray(list) || list.length === 0) {
+        document.getElementById('result-stats').textContent = '';
+        return;
+      }
+      let player=0, banker=0, tie=0;
+      list.forEach(r=>{
+        if(r.result==='player') player++;
+        else if(r.result==='banker') banker++;
+        else if(r.result==='tie') tie++;
+      });
+      const total = player+banker+tie;
+      const pPct = total ? Math.round(player/total*100) : 0;
+      const bPct = total ? Math.round(banker/total*100) : 0;
+      const tPct = total ? Math.round(tie/total*100) : 0;
+      document.getElementById('result-stats').innerHTML =
+        `<b>플레이어</b>: ${player} (${pPct}%) &nbsp; | &nbsp; <b>타이</b>: ${tie} (${tPct}%) &nbsp; | &nbsp; <b>뱅커</b>: ${banker} (${bPct}%)`;
+    }
+    // 방 참가자 표시
+    socket.emit('join room', { room: 'baccarat' });
+    const roomUsersBar = document.getElementById('room-users-bar');
+    socket.on('room users', (users) => {
+      roomUsersBar.style.display = '';
+      const uniqueUsers = [...new Set(users)];
+      roomUsersBar.innerHTML = uniqueUsers.map(u => `<span class='room-user'><span class='room-dot'></span>${u}</span>`).join('');
+    });
+  </script>
+</body>
+</html> 

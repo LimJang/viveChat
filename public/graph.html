@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>그래프 게임</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    @font-face {
+      font-family: 'DungGeunMo';
+      src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+    body {
+      background: #111;
+      color: #39ff14;
+      font-family: 'DungGeunMo', monospace;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      opacity: 0;
+      transition: opacity 0.6s cubic-bezier(.4,1.6,.4,1);
+    }
+    body.page-loaded {
+      opacity: 1;
+    }
+    #header {
+      padding: 24px 0 12px 0;
+      text-align: center;
+      font-size: 1.5em;
+      font-weight: bold;
+      text-shadow: 0 0 8px #39ff14;
+    }
+    #back-btn {
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      z-index: 200;
+      font-size: 1em;
+      padding: 8px 18px;
+    }
+    #my-money {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 120;
+      font-size: 1.08em;
+      color: #39ff14;
+      text-shadow: 0 0 8px #39ff14;
+    }
+    #graph-canvas {
+      display: block;
+      margin: 0 auto 16px auto;
+      background: #181818;
+      border: 2px solid #39ff14;
+      border-radius: 12px;
+      box-shadow: 0 0 16px #39ff1460;
+      width: 98vw;
+      max-width: 600px;
+      height: 220px;
+    }
+    #multiplier {
+      text-align: center;
+      font-size: 2.2em;
+      font-weight: bold;
+      margin-bottom: 8px;
+      text-shadow: 0 0 12px #39ff14;
+    }
+    #bet-panel {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    #bet-panel input {
+      font-family: 'DungGeunMo', monospace;
+      font-size: 1.1em;
+      padding: 8px;
+      border: 1.5px solid #39ff14;
+      background: #111;
+      color: #39ff14;
+      border-radius: 0;
+      outline: none;
+      width: 120px;
+      margin-right: 8px;
+    }
+    .retro-btn {
+      background: #111;
+      color: #39ff14;
+      border: 2px solid #39ff14;
+      border-radius: 0;
+      font-family: 'DungGeunMo', monospace;
+      font-size: 1.1em;
+      padding: 10px 30px;
+      cursor: pointer;
+      box-shadow: 0 0 8px #39ff1460;
+      transition: background 0.2s, color 0.2s, transform 0.1s;
+      margin-bottom: 0;
+      width: auto;
+      outline: none;
+    }
+    .retro-btn:active, .retro-btn:hover {
+      background: #39ff14;
+      color: #111;
+    }
+    #bet-status {
+      text-align: center;
+      font-size: 1.1em;
+      margin-bottom: 12px;
+      min-height: 24px;
+    }
+    #round-info {
+      text-align: center;
+      font-size: 1em;
+      margin-bottom: 8px;
+      color: #39ff14bb;
+    }
+    @media (max-width: 700px) {
+      #header {
+        font-size: 1.1em;
+      }
+      #graph-canvas {
+        height: 120px;
+      }
+      #back-btn {
+        font-size: 1em;
+        padding: 8px 0;
+        width: 98vw;
+        left: 1vw;
+        transform: none;
+      }
+      #my-money, #money-refresh-btn {
+        font-size: 1em !important;
+      }
+      #money-refresh-btn {
+        padding: 0 1px 0 0 !important;
+        height: 1.2em !important;
+        min-width: 1.8em !important;
+      }
+      #my-money {
+        font-size: 0.98em !important;
+        max-width: 70vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+    @media (max-width: 700px) {
+      #money-bar {
+        position: fixed;
+        left: 0; right: 0; bottom: 0;
+        background: #181818;
+        color: #39ff14;
+        font-family: 'DungGeunMo', monospace;
+        font-size: 1.1em;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 0 8px 0;
+        border-top: 2px solid #39ff14;
+        box-shadow: 0 -2px 12px #39ff1460;
+        gap: 12px;
+      }
+      #money-bar button {
+        font-size: 1.2em;
+        margin-right: 10px;
+        padding: 0 4px;
+        height: 2.2em;
+        min-width: 2.2em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #money-bar-text {
+        font-size: 1.1em;
+        max-width: 70vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+    .room-users-bar {
+      position: static;
+      width: 100%;
+      margin: 8px 0 0 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 12px #39ff1440;
+      background: #232946;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      align-items: center;
+      font-size: 1.02em;
+      color: #39ff14;
+      text-shadow: 0 0 6px #39ff14;
+      padding: 8px 14px 8px 10px;
+      min-height: 32px;
+      max-width: 100vw;
+      overflow-x: auto;
+    }
+    .room-user {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: bold;
+      color: #fff;
+      background: #0ff1ce33;
+      border-radius: 6px;
+      padding: 2px 10px 2px 8px;
+      box-shadow: 0 0 4px #0ff1ce40;
+    }
+    .room-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #39ff14;
+      margin-right: 3px;
+      box-shadow: 0 0 6px #39ff14cc;
+    }
+    @media (max-width: 600px) {
+      .room-users-bar { font-size: 0.95em; padding: 6px 4vw 6px 2vw; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+  <button id="back-btn" class="retro-btn">← 메인으로</button>
+  <div id="header">그래프 게임</div>
+  <div id="room-users-bar" class="room-users-bar" style="display:none;"></div>
+  <div id="my-money"></div>
+  <div id="round-info"></div>
+  <div id="multiplier">1.00x</div>
+  <canvas id="graph-canvas" width="600" height="220"></canvas>
+  <div id="bet-panel">
+    <input id="bet-amount" type="number" min="1000" max="100000" step="1000" placeholder="베팅금액">
+    <button id="bet-btn" class="retro-btn">베팅</button>
+    <button id="stop-btn" class="retro-btn" style="display:none;">스톱</button>
+    <div style="margin-top:8px;font-size:0.98em;color:#39ff14bb;">최소 1,000원 ~ 최대 100,000원</div>
+  </div>
+  <div id="bet-status"></div>
+  <div id="betting-timer" style="display:none;"></div>
+  <div id="money-bar">
+    <button id="money-refresh-btn-bar" style="background:none;border:none;color:#39ff14;font-size:1.2em;cursor:pointer;">🔄</button>
+    <span id="money-bar-text" style="font-size:1.1em;">보유 머니: 0원</span>
+  </div>
+  <div id="recent-rounds-bar"></div>
+  <div id="round-number-indicator"></div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    let myBet = null;
+    let myMoney = 0;
+    let currentMultiplier = 1.0;
+    let crashed = false;
+    let roundInfo = {};
+    let bettingOpenUntil = 0;
+    let graphPoints = [];
+    let graphStartTime = null;
+    const GRAPH_TICK_MS = 100;
+    window.hasReservedBet = false;
+    // 인증 및 내 머니 표시
+    fetch('/api/me').then(async res => {
+      if (res.status !== 200) {
+        location.href = '/login.html';
+        return;
+      }
+      const user = await res.json();
+      fetch('/api/users/me').then(r=>r.json()).then(data=>{
+        if(data.money_balance!==undefined){
+          myMoney = data.money_balance;
+          document.getElementById('my-money').textContent = `보유 머니: ${myMoney.toLocaleString()}원`;
+        }
+      });
+    });
+    // 페이지 로딩 효과 및 페이지 이동 트랜지션 함수
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => document.body.classList.add('page-loaded'), 10);
+    });
+    function pageTransitionAndGo(href) {
+      document.body.classList.remove('page-loaded');
+      setTimeout(() => {
+        location.href = href;
+      }, 400);
+    }
+    // 뒤로가기
+    document.getElementById('back-btn').onclick = function() {
+      pageTransitionAndGo('/index.html');
+    };
+    // 소켓 연결
+    const socket = io();
+    socket.on('graph_round_start', info => {
+      roundInfo = info;
+      myBet = null;
+      crashed = false;
+      currentMultiplier = 1.0;
+      graphPoints = [];
+      graphStartTime = Date.now();
+      document.getElementById('multiplier').textContent = '1.00x';
+      document.getElementById('bet-status').textContent = '';
+      document.getElementById('bet-btn').style.display = '';
+      document.getElementById('stop-btn').style.display = 'none';
+      document.getElementById('bet-amount').value = '';
+      document.getElementById('round-info').textContent = `라운드 #${info.gameId} | 최소 ${info.minBet.toLocaleString()}원 ~ 최대 ${info.maxBet.toLocaleString()}원`;
+      bettingOpenUntil = info.bettingOpenUntil || 0;
+      document.getElementById('bet-btn').disabled = true;
+      setTimeout(() => {
+        document.getElementById('bet-btn').disabled = false;
+      }, Math.max(0, bettingOpenUntil - Date.now()));
+      fetch('/api/graph/my-bet').then(r=>r.json()).then(bet=>{
+        if(bet && bet.bet_amount){
+          myBet = bet;
+          document.getElementById('bet-btn').style.display = 'none';
+          document.getElementById('stop-btn').style.display = bet.result==='playing'?'':'none';
+          document.getElementById('bet-status').textContent = bet.result==='win' ? `스톱! +${bet.win_amount.toLocaleString()}원 (${bet.stop_multiplier}x)` : (bet.result==='lose' ? '실패(터짐)' : '베팅 중...');
+        }
+      });
+      window.hasReservedBet = false;
+      setRoundNumber(info.gameId);
+    });
+    socket.on('graph_multiplier', data => {
+      currentMultiplier = data.multiplier;
+      crashed = data.crashed;
+      document.getElementById('multiplier').textContent = `${currentMultiplier.toFixed(2)}x`;
+      if(graphStartTime){
+        const elapsed = Date.now() - graphStartTime;
+        graphPoints.push({
+          x: elapsed,
+          y: currentMultiplier
+        });
+      }
+      drawGraph(crashed);
+      if(myBet && myBet.result==='playing' && crashed){
+        document.getElementById('bet-status').textContent = '실패(터짐)';
+        document.getElementById('stop-btn').style.display = 'none';
+        myBet.result = 'lose';
+      }
+      if(crashed){
+        document.getElementById('stop-btn').style.display = 'none';
+        myBet = null;
+      }
+    });
+    // 카운트다운 표시용 엘리먼트 추가
+    if (!document.getElementById('betting-timer')) {
+      const timerDiv = document.createElement('div');
+      timerDiv.id = 'betting-timer';
+      timerDiv.style.position = 'fixed';
+      timerDiv.style.top = '50%';
+      timerDiv.style.left = '50%';
+      timerDiv.style.transform = 'translate(-50%, -50%)';
+      timerDiv.style.fontSize = '2.5em';
+      timerDiv.style.color = '#39ff14';
+      timerDiv.style.background = 'rgba(0,0,0,0.85)';
+      timerDiv.style.padding = '24px 48px';
+      timerDiv.style.border = '3px solid #39ff14';
+      timerDiv.style.borderRadius = '18px';
+      timerDiv.style.zIndex = '999';
+      timerDiv.style.display = 'none';
+      timerDiv.style.textAlign = 'center';
+      timerDiv.style.transition = 'color 0.2s, border 0.2s, box-shadow 0.2s';
+      // [추가] 게이지 바용 div
+      const gaugeDiv = document.createElement('div');
+      gaugeDiv.id = 'betting-timer-gauge';
+      gaugeDiv.style.marginTop = '18px';
+      gaugeDiv.style.width = '320px';
+      gaugeDiv.style.maxWidth = '80vw';
+      gaugeDiv.style.height = '18px';
+      gaugeDiv.style.display = 'flex';
+      gaugeDiv.style.gap = '2px';
+      gaugeDiv.style.justifyContent = 'center';
+      timerDiv.appendChild(gaugeDiv);
+      document.body.appendChild(timerDiv);
+    }
+    const bettingTimerDiv = document.getElementById('betting-timer');
+    const bettingTimerGauge = document.getElementById('betting-timer-gauge');
+
+    // [추가] 게이지 바 렌더 함수
+    function renderBettingGauge(sec, maxSec) {
+      if (!bettingTimerGauge) return;
+      bettingTimerGauge.innerHTML = '';
+      const total = maxSec || 30;
+      const urgent = sec <= 5;
+      if (urgent) bettingTimerGauge.classList.add('urgent-bar');
+      else bettingTimerGauge.classList.remove('urgent-bar');
+      for (let i = 0; i < total; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'betting-gauge-bar';
+        bar.style.flex = '1 1 0';
+        bar.style.height = '100%';
+        bar.style.borderRadius = '2px';
+        bar.style.background = i < sec ? (urgent ? '#ff3c00' : '#39ff14') : '#222';
+        if (urgent && i < sec) bar.classList.add('urgent');
+        bettingTimerGauge.appendChild(bar);
+      }
+    }
+
+    // 소켓 이벤트: 베팅 타임 카운트다운
+    socket.on('betting_phase', data => {
+      window.hasReservedBet = false;
+      const sec = data.seconds;
+      document.getElementById('bet-btn').style.display = '';
+      renderBettingGauge(sec, data.maxSeconds || 30);
+      if (sec > 0) {
+        bettingTimerDiv.style.display = '';
+        bettingTimerDiv.textContent = `베팅 시간: ${sec}초`;
+        if (sec <= 5) {
+          bettingTimerDiv.classList.add('urgent-text');
+        } else {
+          bettingTimerDiv.classList.remove('urgent-text');
+        }
+        if (!window.hasReservedBet) {
+          document.getElementById('bet-btn').disabled = false;
+        } else {
+          document.getElementById('bet-btn').disabled = true;
+        }
+        document.getElementById('bet-status').textContent = '베팅은 다음 라운드에 적용됩니다.';
+      } else {
+        bettingTimerDiv.style.display = 'none';
+        bettingTimerDiv.classList.remove('urgent-text');
+        document.getElementById('bet-btn').disabled = true;
+        document.getElementById('bet-status').textContent = '그래프 진행 중에는 베팅할 수 없습니다.';
+      }
+      if(window.lastRoundNum){
+        setRoundNumber(window.lastRoundNum+1);
+      }
+      document.getElementById('stop-btn').style.display = 'none';
+    });
+    // 애니메이션 효과 추가
+    const style = document.createElement('style');
+    style.innerHTML = `@keyframes shake { 0% { transform: translate(-50%, -50%) rotate(-2deg); } 100% { transform: translate(-50%, -50%) rotate(2deg); } }`;
+    document.head.appendChild(style);
+    // 베팅
+    document.getElementById('bet-btn').onclick = function() {
+      const amount = parseInt(document.getElementById('bet-amount').value,10);
+      if(!amount) return alert('베팅금액 입력');
+      fetch('/api/graph/bet', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({amount})
+      }).then(r=>r.json()).then(data=>{
+        if(data && data.reserved){
+          confetti({
+            particleCount: 30,
+            spread: 60,
+            origin: { y: 0.7 },
+            emojis: ['💡', '⭐', '✨', '🧠'],
+            scalar: 1.2,
+            shapes: ['emoji']
+          });
+          // 텍스트 효과
+          const msg = document.createElement('div');
+          msg.textContent = '현명한 선택!';
+          msg.style.position = 'fixed';
+          msg.style.left = '50%';
+          msg.style.top = '55%';
+          msg.style.transform = 'translate(-50%, -50%)';
+          msg.style.fontSize = '2em';
+          msg.style.color = '#fff200';
+          msg.style.textShadow = '0 0 12px #39ff14, 0 0 24px #fff200';
+          msg.style.zIndex = 9999;
+          msg.style.opacity = 1;
+          msg.style.transition = 'opacity 1.2s, top 1.2s';
+          document.body.appendChild(msg);
+          setTimeout(() => {
+            msg.style.opacity = 0;
+            msg.style.top = '45%';
+            setTimeout(() => msg.remove(), 1200);
+          }, 800);
+          document.getElementById('bet-status').textContent = '베팅이 다음 라운드에 예약되었습니다.';
+          document.getElementById('bet-btn').disabled = true;
+          window.hasReservedBet = true;
+        }else{
+          alert(data.error||'베팅 실패');
+          if(data.error && data.error.includes('베팅')){
+            document.getElementById('bet-status').textContent = data.error;
+          }
+        }
+      }).catch((err)=>{
+        alert(err && err.message || '베팅 실패');
+        if(err && err.message && err.message.includes('베팅')){
+          document.getElementById('bet-status').textContent = err.message;
+        }
+      });
+    };
+    // 스톱
+    document.getElementById('stop-btn').onclick = function() {
+      fetch('/api/graph/stop', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'}
+      }).then(r=>r.json()).then(data=>{
+        if(data.success){
+          confetti({
+            particleCount: 50,
+            spread: 80,
+            origin: { y: 0.6 },
+            colors: ['#fff200', '#39ff14', '#00eaff', '#ff3c00']
+          });
+          document.getElementById('bet-status').textContent = `스톱! +${data.winAmount.toLocaleString()}원 (${data.stopMultiplier}x)`;
+          document.getElementById('stop-btn').style.display = 'none';
+          myBet.result = 'win';
+          myMoney += data.winAmount;
+          document.getElementById('my-money').textContent = `보유 머니: ${myMoney.toLocaleString()}원`;
+        }else{
+          alert(data.error||'스톱 실패');
+        }
+      });
+    };
+    // 실시간 그래프 그리기
+    function drawGraph(crashed){
+      const canvas = document.getElementById('graph-canvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      // 배경
+      ctx.fillStyle = '#181818';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      // 그리드/눈금
+      ctx.save();
+      ctx.strokeStyle = '#39ff1430';
+      ctx.lineWidth = 1;
+      for(let i=0;i<=10;i++){
+        // y축(배당률)
+        const y = 30 + (canvas.height-60)*(1-i/10);
+        ctx.beginPath();
+        ctx.moveTo(40,y);
+        ctx.lineTo(canvas.width-20,y);
+        ctx.stroke();
+        ctx.fillStyle = '#39ff14bb';
+        ctx.font = '0.95em DungGeunMo, monospace';
+        ctx.fillText(`${(0.2 + (10-0.2)*i/10).toFixed(1)}x`, 2, y+4);
+      }
+      for(let i=0;i<=10;i++){
+        // x축(초)
+        const x = 40 + (canvas.width-60)*i/10;
+        ctx.beginPath();
+        ctx.moveTo(x,canvas.height-30);
+        ctx.lineTo(x,30);
+        ctx.stroke();
+        ctx.fillStyle = '#39ff14bb';
+        ctx.font = '0.95em DungGeunMo, monospace';
+        ctx.fillText(`${(10*i/10).toFixed(1)}s`, x-10, canvas.height-10);
+      }
+      ctx.restore();
+      // 축
+      ctx.strokeStyle = '#39ff14';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(40,canvas.height-30);
+      ctx.lineTo(40,30);
+      ctx.moveTo(40,canvas.height-30);
+      ctx.lineTo(canvas.width-20,canvas.height-30);
+      ctx.stroke();
+      // 지진계 스타일 곡선
+      ctx.save();
+      ctx.strokeStyle = crashed ? '#ff3c00' : '#39ff14';
+      ctx.lineWidth = 3.2;
+      ctx.beginPath();
+      const maxY = canvas.height-60;
+      const totalPoints = graphPoints.length;
+      if(totalPoints > 0){
+        const crashTime = graphPoints[totalPoints-1].x;
+        const centerX = canvas.width * 0.6;
+        const pxPerMs = (centerX-40) / crashTime; // crashTime이 10초면 전체가 다 보임
+        let prevX, prevY;
+        for(let i=0;i<totalPoints;i++){
+          const t = graphPoints[i].x;
+          let x = centerX - (crashTime - t) * pxPerMs;
+          if(x < 40) x = 40; // 왼쪽 경계
+          // y축: multiplier(0.2~10.0x)
+          const yNorm = (graphPoints[i].y-0.2)/(10-0.2);
+          const y = canvas.height-30 - maxY * yNorm;
+          if(i===0){ ctx.moveTo(x,y); prevX=x; prevY=y; }
+          else {
+            // 곡선 보간(부드럽게)
+            const midX = (prevX + x)/2;
+            ctx.quadraticCurveTo(prevX, prevY, midX, (prevY+y)/2);
+            ctx.quadraticCurveTo(midX, (prevY+y)/2, x, y);
+            prevX = x; prevY = y;
+          }
+        }
+        ctx.stroke();
+        // 추(현재 배당률) 강조
+        const last = graphPoints[totalPoints-1];
+        const yNorm = (last.y-0.2)/(10-0.2);
+        const y = canvas.height-30 - maxY * yNorm;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(centerX, y, 10, 0, 2*Math.PI);
+        ctx.fillStyle = crashed ? '#ff3c00' : '#39ff14';
+        ctx.shadowColor = crashed ? '#ff3c00' : '#39ff14';
+        ctx.shadowBlur = 16;
+        ctx.fill();
+        ctx.restore();
+        // 배당률 텍스트(크고 강조, 항상 centerX)
+        let tx = centerX+12;
+        let ty = y-8;
+        if(tx > canvas.width-120) tx = canvas.width-120;
+        if(ty < 30) ty = 30;
+        if(ty > canvas.height-50) ty = canvas.height-50;
+        ctx.save();
+        ctx.shadowColor = crashed ? '#ff3c00' : '#39ff14';
+        ctx.shadowBlur = 16;
+        ctx.fillStyle = crashed ? '#ff3c00' : '#39ff14';
+        ctx.font = 'bold 2em DungGeunMo, monospace';
+        ctx.fillText(`${last.y.toFixed(2)}x`, tx, ty);
+        ctx.restore();
+        if(crashed){
+          ctx.save();
+          ctx.font = 'bold 2.2em DungGeunMo, monospace';
+          ctx.fillStyle = '#fff200';
+          ctx.shadowColor = '#ff3c00';
+          ctx.shadowBlur = 24;
+          ctx.fillText('CRASH!', tx+60, ty-24);
+          ctx.restore();
+        }
+      }
+      ctx.restore();
+    }
+    // 하단 고정 바 생성 (모바일용)
+    if (!document.getElementById('money-bar')) {
+      const moneyBar = document.createElement('div');
+      moneyBar.id = 'money-bar';
+      moneyBar.style.display = 'none';
+      moneyBar.innerHTML = `
+        <button id="money-refresh-btn-bar" style="background:none;border:none;color:#39ff14;font-size:1.2em;cursor:pointer;">🔄</button>
+        <span id="money-bar-text" style="font-size:1.1em;">보유 머니: 0원</span>
+      `;
+      document.body.appendChild(moneyBar);
+    }
+    function updateMoneyBar(val) {
+      const el = document.getElementById('money-bar-text');
+      if (el) el.textContent = `보유 머니: ${val.toLocaleString()}원`;
+    }
+    // 기존 myMoneyDiv는 PC에서만 보이게
+    function updateMoneyVisibility() {
+      const isMobile = window.innerWidth <= 700;
+      const myMoneyDiv = document.getElementById('my-money');
+      const moneyBar = document.getElementById('money-bar');
+      if (isMobile) {
+        if (myMoneyDiv) myMoneyDiv.style.display = 'none';
+        if (moneyBar) moneyBar.style.display = 'flex';
+      } else {
+        if (myMoneyDiv) myMoneyDiv.style.display = '';
+        if (moneyBar) moneyBar.style.display = 'none';
+      }
+    }
+    window.addEventListener('resize', updateMoneyVisibility);
+    updateMoneyVisibility();
+    // 새로고침 버튼 이벤트(하단 바)
+    const moneyRefreshBtnBar = document.getElementById('money-refresh-btn-bar');
+    if (moneyRefreshBtnBar) {
+      moneyRefreshBtnBar.onclick = function() {
+        moneyRefreshBtnBar.style.transform = 'rotate(360deg)';
+        setTimeout(()=>{moneyRefreshBtnBar.style.transform = ''}, 400);
+        fetch('/api/users/me').then(r=>r.json()).then(data=>{
+          if(data.money_balance!==undefined){
+            myMoney = data.money_balance;
+            updateMoneyBar(myMoney);
+          }
+        });
+      };
+    }
+    // 자동 새로고침(5초마다)
+    setInterval(()=>{
+      fetch('/api/users/me').then(r=>r.json()).then(data=>{
+        if(data.money_balance!==undefined){
+          myMoney = data.money_balance;
+          updateMoneyBar(myMoney);
+          const myMoneyDiv = document.getElementById('my-money');
+          if(myMoneyDiv) myMoneyDiv.textContent = `보유 머니: ${myMoney.toLocaleString()}원`;
+        }
+      });
+    }, 5000);
+    // 최초 머니 표시 동기화
+    fetch('/api/users/me').then(r=>r.json()).then(data=>{
+      if(data.money_balance!==undefined){
+        myMoney = data.money_balance;
+        updateMoneyBar(myMoney);
+        const myMoneyDiv = document.getElementById('my-money');
+        if(myMoneyDiv) myMoneyDiv.textContent = `보유 머니: ${myMoney.toLocaleString()}원`;
+      }
+    });
+    // PC 환경(700px 초과)에서 '내 머니' 왼쪽에 새로고침 버튼 추가
+    function ensurePcMoneyRefreshBtn() {
+      const isPc = window.innerWidth > 700;
+      const myMoneyDiv = document.getElementById('my-money');
+      if (isPc && myMoneyDiv && !document.getElementById('money-refresh-btn-pc')) {
+        // flex 컨테이너 생성
+        const flexDiv = document.createElement('div');
+        flexDiv.style.display = 'flex';
+        flexDiv.style.alignItems = 'center';
+        flexDiv.style.gap = '6px';
+        flexDiv.style.position = 'relative';
+        flexDiv.style.zIndex = '120';
+        flexDiv.style.background = 'none';
+        flexDiv.style.fontSize = '1.08em';
+        flexDiv.style.userSelect = 'none';
+        // 새로고침 버튼 생성
+        const refreshBtn = document.createElement('button');
+        refreshBtn.id = 'money-refresh-btn-pc';
+        refreshBtn.innerHTML = '🔄';
+        refreshBtn.style.background = 'none';
+        refreshBtn.style.border = 'none';
+        refreshBtn.style.color = '#39ff14';
+        refreshBtn.style.fontSize = '1.1em';
+        refreshBtn.style.cursor = 'pointer';
+        refreshBtn.style.transition = 'transform 0.4s';
+        refreshBtn.style.padding = '0 2px 0 0';
+        refreshBtn.style.margin = '0';
+        refreshBtn.style.height = '1.5em';
+        refreshBtn.style.display = 'flex';
+        refreshBtn.style.alignItems = 'center';
+        // 기존 myMoneyDiv를 flexDiv에 옮기기
+        myMoneyDiv.parentNode.insertBefore(flexDiv, myMoneyDiv);
+        flexDiv.appendChild(refreshBtn);
+        flexDiv.appendChild(myMoneyDiv);
+        // 버튼 클릭 이벤트
+        refreshBtn.onclick = function() {
+          refreshBtn.style.transform = 'rotate(360deg)';
+          setTimeout(()=>{refreshBtn.style.transform = ''}, 400);
+          fetch('/api/users/me').then(r=>r.json()).then(data=>{
+            if(data.money_balance!==undefined){
+              myMoney = data.money_balance;
+              myMoneyDiv.textContent = `보유 머니: ${myMoney.toLocaleString()}원`;
+            }
+          });
+        };
+      }
+    }
+    window.addEventListener('resize', ensurePcMoneyRefreshBtn);
+    ensurePcMoneyRefreshBtn();
+    // 하단 최근 라운드 지표 바 생성
+    if (!document.getElementById('recent-rounds-bar')) {
+      const bar = document.createElement('div');
+      bar.id = 'recent-rounds-bar';
+      bar.style.position = 'fixed';
+      bar.style.left = '0';
+      bar.style.right = '0';
+      bar.style.bottom = '48px';
+      bar.style.background = '#181818';
+      bar.style.color = '#39ff14';
+      bar.style.fontFamily = "'DungGeunMo', monospace";
+      bar.style.fontSize = '1em';
+      bar.style.zIndex = '9998';
+      bar.style.display = 'flex';
+      bar.style.alignItems = 'center';
+      bar.style.justifyContent = 'center';
+      bar.style.gap = '18px';
+      bar.style.padding = '6px 0 4px 0';
+      bar.style.borderTop = '1.5px solid #39ff14';
+      bar.style.boxShadow = '0 -1px 8px #39ff1460';
+      bar.style.overflowX = 'auto';
+      document.body.appendChild(bar);
+    }
+    function renderRecentRounds(rounds) {
+      const bar = document.getElementById('recent-rounds-bar');
+      if (!bar) return;
+      bar.innerHTML = rounds.map(r =>
+        `<div style="min-width:110px;padding:2px 8px;background:#222;border-radius:8px;border:1px solid #39ff14;display:inline-block;text-align:center;">
+          <div style='font-size:0.98em;'>라운드 <b>#${r.round}</b></div>
+          <div style='font-size:1.08em;'>최고배수 <b>${r.crashMultiplier}x</b></div>
+          <div style='font-size:0.93em;color:#39ff14bb;'>${r.elapsedSeconds}s</div>
+        </div>`
+      ).join('');
+    }
+    socket.on('recent_rounds', rounds => {
+      renderRecentRounds(rounds);
+      if(rounds && rounds.length>0){
+        window.lastRoundNum = rounds[rounds.length-1].round;
+        setRoundNumber(window.lastRoundNum+1);
+      }
+    });
+    // 라운드 번호 표시용 엘리먼트 추가
+    if (!document.getElementById('round-number-indicator')) {
+      const roundDiv = document.createElement('div');
+      roundDiv.id = 'round-number-indicator';
+      roundDiv.style.position = 'fixed';
+      roundDiv.style.top = '8px';
+      roundDiv.style.left = '50%';
+      roundDiv.style.transform = 'translateX(-50%)';
+      roundDiv.style.zIndex = '200';
+      roundDiv.style.fontSize = '1.15em';
+      roundDiv.style.color = '#fff200';
+      roundDiv.style.background = 'rgba(24,24,24,0.92)';
+      roundDiv.style.padding = '4px 18px';
+      roundDiv.style.border = '2px solid #39ff14';
+      roundDiv.style.borderRadius = '12px';
+      roundDiv.style.fontFamily = "'DungGeunMo', monospace";
+      roundDiv.style.textShadow = '0 0 8px #39ff14, 0 0 16px #fff200';
+      document.body.appendChild(roundDiv);
+    }
+    function setRoundNumber(num) {
+      const el = document.getElementById('round-number-indicator');
+      if (el) el.textContent = `라운드 #${num}`;
+    }
+    const style2 = document.createElement('style');
+    style2.innerHTML = `
+    @keyframes bar-glow {
+      0% { box-shadow: 0 0 8px #ff3c00, 0 0 24px #ff3c00; filter: brightness(1.2); }
+      50% { box-shadow: 0 0 24px #ff3c00, 0 0 48px #ff3c00; filter: brightness(2.2); }
+      100% { box-shadow: 0 0 8px #ff3c00, 0 0 24px #ff3c00; filter: brightness(1.2); }
+    }
+    .betting-gauge-bar {
+      transition: background 0.2s, box-shadow 0.2s, filter 0.2s;
+    }
+    .betting-gauge-bar.urgent {
+      animation: bar-glow 0.7s infinite;
+      background: #ff3c00 !important;
+    }
+    #betting-timer-gauge.urgent-bar {
+      animation: bar-glow 0.7s infinite;
+    }
+    #betting-timer.urgent-text {
+      animation: bar-glow 0.7s infinite;
+      color: #ff3c00 !important;
+      border-color: #ff3c00 !important;
+    }
+    `;
+    document.head.appendChild(style2);
+    // 방 참가자 표시
+    socket.emit('join room', { room: 'graph' });
+    const roomUsersBar = document.getElementById('room-users-bar');
+    socket.on('room users', (users) => {
+      roomUsersBar.style.display = '';
+      const uniqueUsers = [...new Set(users)];
+      roomUsersBar.innerHTML = uniqueUsers.map(u => `<span class='room-user'><span class='room-dot'></span>${u}</span>`).join('');
+    });
+  </script>
+</body>
+</html> 

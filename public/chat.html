@@ -1,0 +1,16 @@
+  <body>
+    <div id="user-nickname" style="text-align:right;color:#39ff14;font-size:1.1em;margin-bottom:8px;"></div>
+    <!-- 기존 채팅 UI ... -->
+    <script>
+      // 로그인 체크 및 닉네임 표시
+      fetch('/api/me').then(async res => {
+        if (res.status !== 200) {
+          location.href = '/index.html';
+          return;
+        }
+        const user = await res.json();
+        document.getElementById('user-nickname').textContent = `닉네임: ${user.username}`;
+      });
+      // ... 기존 채팅 JS ...
+    </script>
+  </body> 

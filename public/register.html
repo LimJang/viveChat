@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>회원가입 - viveGame</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body style="background:#000000;color:#39ff14;font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh;">
+  <form id="registerForm" style="background:#222;padding:32px 24px;border-radius:8px;box-shadow:0 0 16px #39ff1460;min-width:220px;text-align:center;">
+    <h2 style="color:#39ff14;">회원가입</h2>
+    <input name="username" placeholder="닉네임" required style="width:90%;margin-bottom:12px;padding:8px;"><br>
+    <input name="email" type="email" placeholder="이메일" required style="width:90%;margin-bottom:12px;padding:8px;"><br>
+    <input name="password" type="password" placeholder="비밀번호" required style="width:90%;margin-bottom:16px;padding:8px;"><br>
+    <button type="submit" style="padding:10px 30px;background:#39ff14;color:#111;border:none;font-size:1.1em;cursor:pointer;">회원가입</button>
+  </form>
+  <script>
+    document.getElementById('registerForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(this));
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const result = await res.json();
+      alert(result.success ? '회원가입 성공!' : result.error);
+      if(result.success) location.href = '/';
+    };
+  </script>
+</body>
+</html> 

@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>경마 게임</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    @font-face {
+      font-family: 'DungGeunMo';
+      src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+    body {
+      background: #111;
+      color: #39ff14;
+      font-family: 'DungGeunMo', monospace;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      opacity: 0;
+      transition: opacity 0.6s cubic-bezier(.4,1.6,.4,1);
+    }
+    body.page-loaded { opacity: 1; }
+    #header {
+      padding: 24px 0 12px 0;
+      text-align: center;
+      font-size: 1.5em;
+      font-weight: bold;
+      text-shadow: 0 0 8px #39ff14;
+    }
+    #back-btn {
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      z-index: 200;
+      font-size: 1em;
+      padding: 8px 18px;
+    }
+    #my-money {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 120;
+      font-size: 1.08em;
+      color: #39ff14;
+      text-shadow: 0 0 8px #39ff14;
+    }
+    #race-info-bar {
+      text-align: center;
+      font-size: 1.1em;
+      margin-bottom: 8px;
+      color: #39ff14bb;
+    }
+    #betting-timer {
+      text-align: center;
+      font-size: 1.2em;
+      margin-bottom: 8px;
+      color: #fff200;
+      text-shadow: 0 0 8px #39ff14, 0 0 16px #fff200;
+      min-height: 28px;
+    }
+    #bet-panel {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-gap: 10px;
+      width: 98vw;
+      margin: 0 auto 18px auto;
+      max-width: 700px;
+      overflow-x: auto;
+    }
+    .horse-bet-card {
+      background: #181818;
+      border: 2px solid #39ff14;
+      border-radius: 10px;
+      padding: 8px 2px 10px 2px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 0;
+      min-height: 90px;
+      box-shadow: 0 0 8px #39ff1460;
+      position: relative;
+      gap: 2px;
+      margin: 0;
+      font-size: 1em;
+      transition: box-shadow 0.2s;
+    }
+    .horse-bet-card.bet-highlight {
+      box-shadow: 0 0 16px 4px #39ff14, 0 0 8px #fff200;
+      border: 2.5px solid #fff200;
+    }
+    .horse-img {
+      width: 38px; height: 38px;
+      margin-bottom: 2px;
+      border-radius: 6px;
+      background: #222;
+      object-fit: contain;
+      box-shadow: 0 0 6px #000a;
+    }
+    .horse-name {
+      font-weight: bold;
+      font-size: 1.08em;
+      margin-bottom: 1px;
+    }
+    .horse-odds {
+      color: #0ff1ce;
+      font-weight: bold;
+      margin-right: 8px;
+      font-size: 0.98em;
+    }
+    .bet-input, .bet-btn {
+      width: 90%;
+      margin: 2px 0;
+      font-size: 1em;
+    }
+    .bet-btn {
+      background: #111;
+      color: #39ff14;
+      border: 2px solid #39ff14;
+      border-radius: 0;
+      font-family: 'DungGeunMo', monospace;
+      font-size: 1em;
+      padding: 6px 18px;
+      cursor: pointer;
+      box-shadow: 0 0 8px #39ff1460;
+      transition: background 0.2s, color 0.2s, transform 0.1s;
+      margin-bottom: 0;
+      width: auto;
+      outline: none;
+    }
+    .bet-btn:active, .bet-btn:hover {
+      background: #39ff14;
+      color: #111;
+    }
+    #race-canvas {
+      display: block;
+      margin: 0 auto 16px auto;
+      background: #181818;
+      border: 2px solid #39ff14;
+      border-radius: 12px;
+      box-shadow: 0 0 16px #39ff1460;
+      width: 98vw;
+      max-width: 700px;
+      height: 260px;
+      transition: height 0.2s;
+    }
+    #race-result {
+      text-align: center;
+      font-size: 1.2em;
+      font-weight: bold;
+      margin: 12px 0 0 0;
+      color: #fff200;
+      text-shadow: 0 0 8px #39ff14, 0 0 16px #fff200;
+      min-height: 32px;
+    }
+    #betting-message {
+      text-align: center;
+      color: #fff200;
+      font-size: 1.08em;
+      min-height: 24px;
+      margin-bottom: 4px;
+    }
+    @media (max-width: 700px) {
+      #header { font-size: 1.1em; }
+      #race-canvas { height: 140px; }
+      #back-btn { font-size: 1em; padding: 8px 0; width: 98vw; left: 1vw; transform: none; }
+      #my-money { font-size: 0.98em !important; max-width: 70vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      #bet-panel { max-width: 99vw; }
+    }
+    @media (max-width: 600px) {
+      body { padding: 0; }
+      #header { font-size: 1em; padding: 14px 0 6px 0; }
+      #back-btn { position: static; width: 100vw; left: 0; top: 0; margin: 0; border-radius: 0; font-size: 0.98em; padding: 8px 0; }
+      #my-money { position: static; display: block; text-align: center; margin: 0 auto 4px auto; font-size: 0.95em; }
+      #race-info-bar, #betting-timer, #payout-message { font-size: 0.98em; margin-bottom: 2px; }
+      #bet-panel {
+        grid-gap: 6px;
+        width: 99vw;
+        margin: 0 auto 8px auto;
+        max-width: 99vw;
+      }
+      .horse-bet-card {
+        min-height: 70px;
+        font-size: 0.98em;
+        padding: 5px 1px 7px 1px;
+      }
+      .horse-img { width: 28px; height: 28px; }
+      .bet-input, .bet-btn { font-size: 0.98em; }
+      #race-canvas {
+        width: 100vw;
+        min-width: 0;
+        max-width: 100vw;
+        height: 44vh;
+        min-height: 90px;
+        max-height: 180px;
+        border-radius: 8px;
+      }
+      #race-result { font-size: 1em; min-height: 24px; }
+      #betting-message, #payout-message { font-size: 1em; min-height: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div style="display:flex;flex-direction:column;align-items:center;width:100vw;">
+    <button id="back-btn" class="bet-btn">← 메인으로</button>
+    <div id="header">경마 게임</div>
+    <div id="my-money"></div>
+    <div id="race-info-bar"></div>
+    <div id="betting-timer"></div>
+    <div id="payout-info" style="text-align:center;font-size:1.08em;color:#fff200;margin-bottom:4px;">등수별 배당: <b>1등 5배, 2등 2배, 3등 1.2배</b></div>
+    <div id="payout-message" style="text-align:center;font-size:1.18em;font-weight:bold;min-height:28px;margin-bottom:4px;"></div>
+    <div id="betting-message"></div>
+    <div id="bet-panel"></div>
+    <canvas id="race-canvas" width="700" height="260"></canvas>
+    <div id="race-result"></div>
+    <div id="race-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:999;background:rgba(0,0,0,0.82);backdrop-filter:blur(2px);align-items:center;justify-content:center;"></div>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    let myMoney = 0;
+    let myBet = null;
+    let roundId = null;
+    let horses = [];
+    let betting = false;
+    let bettingCountdown = 0;
+    let raceProgress = [];
+    let raceResult = null;
+    let myBets = {};
+    let betPanelRendered = false;
+    // 애니메이션용 위치 배열
+    let currentPositions = [];
+    let targetPositions = [];
+    let animationStart = 0;
+    let animationDuration = 800; // 기본 0.8초
+    let animating = false;
+    let raceStartTime = 0;
+    let raceEndTime = 0;
+    let raceAnimating = false;
+    let raceLastUpdate = 0;
+    let raceTotalDuration = 17000; // 17초(15~20초 사이)
+    let raceFinalPositions = [];
+    // 등수별 고정 배당 안내 (표)
+    const FIXED_ODDS = {1:2.5, 2:1.5, 7:1.0, 8:2.0};
+    const FIXED_ODDS_TABLE = `
+      <table id='fixed-odds-table' style='margin:0 auto 8px auto;text-align:center;font-size:1.08em;color:#fff200;background:#222;border-radius:8px;box-shadow:0 0 8px #39ff14a0;'><tr>
+        <th style='padding:6px 12px;'>1등</th>
+        <th style='padding:6px 12px;'>2등</th>
+        <th style='padding:6px 12px;'>7등</th>
+        <th style='padding:6px 12px;'>8등</th>
+      </tr><tr>
+        <td style='padding:6px 12px;font-weight:bold;'>2.5배</td>
+        <td style='padding:6px 12px;font-weight:bold;'>1.5배</td>
+        <td style='padding:6px 12px;font-weight:bold;'>1.0배</td>
+        <td style='padding:6px 12px;font-weight:bold;'>2.0배</td>
+      </tr></table>
+      <div style='text-align:center;font-size:0.98em;color:#aaa;margin-bottom:4px;'>3~6등은 배당 없음</div>
+    `;
+    // 내 머니 표시
+    function updateMyMoney() {
+      fetch('/api/users/me').then(r=>r.json()).then(data=>{
+        if(data.money_balance!==undefined){
+          myMoney = data.money_balance;
+          document.getElementById('my-money').textContent = `보유 머니: ${myMoney.toLocaleString()}원`;
+        }
+      });
+    }
+    updateMyMoney();
+    // 뒤로가기
+    document.getElementById('back-btn').onclick = function() {
+      location.href = '/index.html';
+    };
+    // 소켓 연결
+    const socket = io();
+    // 라운드/베팅/진행/결과 이벤트 핸들러
+    socket.on('horse_race_round_start', data => {
+      roundId = data.roundId;
+      horses = data.horses;
+      betting = data.betting;
+      bettingCountdown = data.bettingCountdown;
+      myBet = null;
+      myBets = {};
+      raceResult = null;
+      renderRaceInfo();
+      renderBetPanel(true);
+      renderRaceResult();
+      clearCanvas();
+      raceStartTime = 0;
+      raceEndTime = 0;
+      raceAnimating = false;
+      raceLastUpdate = 0;
+      raceFinalPositions = [];
+    });
+    socket.on('horse_race_betting_phase', data => {
+      betting = data.betting;
+      bettingCountdown = data.bettingCountdown;
+      renderRaceInfo();
+      renderBetPanel(false); // 값만 갱신
+    });
+    socket.on('horse_race_progress', data => {
+      // targetPositions 갱신
+      targetPositions = data.horses.map(h => h.pos);
+      // 즉시 위치 반영(보간/노이즈 없이)
+      currentPositions = [...targetPositions];
+      drawRaceCanvasWithPositions(currentPositions);
+      // 경주 시작 타임 기록
+      if (!raceStartTime) raceStartTime = performance.now();
+      raceLastUpdate = performance.now();
+      // 마지막 위치(결승) 도달 시점 기록
+      if (targetPositions.some(p => p >= 100)) {
+        raceEndTime = performance.now();
+        raceFinalPositions = [...targetPositions];
+        raceAnimating = true;
+      }
+    });
+    socket.on('horse_race_result', data => {
+      raceResult = data;
+      renderRaceResult();
+      showRaceModal();
+    });
+    socket.on('horse_race_payout', data => {
+      const el = document.getElementById('payout-message');
+      const amt = data.amount || 0;
+      el.textContent = (amt > 0 ? '+' : '') + amt.toLocaleString() + '원';
+      el.style.color = amt > 0 ? '#39ff14' : (amt < 0 ? '#ff3c00' : '#fff');
+      el.style.transition = 'none';
+      el.style.transform = 'scale(1.4)';
+      el.style.opacity = '0.2';
+      // 머니 이펙트
+      const moneyEl = document.getElementById('my-money');
+      if(moneyEl){
+        moneyEl.style.transition = 'none';
+        moneyEl.style.transform = 'scale(1.18)';
+        if(amt>0) moneyEl.style.color = '#39ff14';
+        else if(amt<0) moneyEl.style.color = '#ff3c00';
+        else moneyEl.style.color = '#fff200';
+        setTimeout(()=>{
+          moneyEl.style.transition = 'all 0.5s cubic-bezier(.4,1.6,.4,1)';
+          moneyEl.style.transform = 'scale(1)';
+          moneyEl.style.color = '#39ff14';
+        }, 300);
+      }
+      // payout-message 애니메이션
+      setTimeout(()=>{
+        el.style.transition = 'all 0.5s cubic-bezier(.4,1.6,.4,1)';
+        el.style.transform = 'scale(1)';
+        el.style.opacity = '1';
+        if(amt<0){
+          el.style.animation = 'shake 0.5s';
+        }
+      }, 30);
+      setTimeout(()=>{
+        el.style.transition = 'all 0.5s';
+        el.style.opacity = '0';
+        el.style.animation = '';
+      }, 3500);
+      setTimeout(()=>{
+        el.textContent = '';
+        el.style.opacity = '1';
+      }, 4200);
+    });
+    // 라운드 정보/베팅 UI 렌더
+    function renderRaceInfo() {
+      document.getElementById('race-info-bar').textContent = roundId ? `라운드 #${roundId}` : '';
+      document.getElementById('betting-timer').textContent = betting ? `베팅 타임: ${bettingCountdown}초` : (bettingCountdown === 0 ? '경주 진행 중...' : '');
+    }
+    // 말 이름에 따라 더 아이코닉한 이모티콘 반환
+    function getHorseEmoji(name) {
+      const map = {
+        '블랙스타': '🌑',
+        '썬더': '⚡',
+        '레드윈드': '💨',
+        '골드문': '💰',
+        '그린라이트': '🍀',
+        '블루웨이브': '🌊',
+        '화이트스톰': '☁️',
+        '핑크드림': '🌸',
+      };
+      return map[name] || '🐎';
+    }
+    function renderBetPanel(forceFullRender = false) {
+      const panel = document.getElementById('bet-panel');
+      if (!horses.length) { panel.innerHTML = ''; betPanelRendered = false; return; }
+      if (!betPanelRendered || forceFullRender) {
+        // 상단에 고정배당 안내 표
+        if (!document.getElementById('fixed-odds-table')) {
+          const info = document.createElement('div');
+          info.id = 'fixed-odds-table-wrap';
+          info.innerHTML = FIXED_ODDS_TABLE;
+          panel.parentNode.insertBefore(info, panel);
+        }
+        panel.innerHTML = horses.map((h,i) => {
+          return `
+            <div class='horse-bet-card' id='bet-row-${h.id}'>
+              <span class='horse-img' style="font-size:2em;">${getHorseEmoji(h.name)}</span>
+              <span class='horse-name'>${h.name}</span>
+              <input class='bet-input' type='number' min='1000' max='1000000' step='1000' placeholder='베팅금액' id='bet-input-${h.id}'>
+              <button type='button' class='bet-btn' id='bet-btn-${h.id}' onclick='placeBet(${h.id})'>베팅</button>
+            </div>
+          `;
+        }).join('');
+        betPanelRendered = true;
+      }
+      // 값/상태만 갱신
+      horses.forEach((h,i) => {
+        const input = document.getElementById('bet-input-' + h.id);
+        const btn = document.getElementById('bet-btn-' + h.id);
+        const card = document.getElementById('bet-row-' + h.id);
+        if (input && myBets[h.id]) input.value = myBets[h.id];
+        if (!betting) {
+          if (input) input.disabled = true;
+          if (btn) {
+            btn.disabled = true;
+            btn.textContent = '베팅마감';
+          }
+          if (card) card.classList.remove('bet-highlight');
+        } else {
+          if (myBets[h.id]) {
+            if (input) input.disabled = true;
+            if (btn) {
+              btn.disabled = true;
+              btn.textContent = '베팅완료';
+            }
+            if (card) card.classList.remove('bet-highlight');
+          } else {
+            if (input) input.disabled = false;
+            if (btn) {
+              btn.disabled = false;
+              btn.textContent = '베팅';
+            }
+            if (card) card.classList.remove('bet-highlight');
+          }
+        }
+      });
+    }
+    // 베팅 함수
+    window.placeBet = function(horseId) {
+      if (!betting) return showBettingMsg('지금은 베팅 시간이 아닙니다.');
+      if (myBets[horseId]) return showBettingMsg('이미 이 말에 베팅하셨습니다.');
+      const input = document.getElementById('bet-input-' + horseId);
+      const btn = document.getElementById('bet-btn-' + horseId);
+      const row = document.getElementById('bet-row-' + horseId);
+      const amount = parseInt(input.value, 10);
+      if (!amount || amount < 1000 || amount > 1000000) return showBettingMsg('베팅금액은 1,000~1,000,000원');
+      fetch('/api/horse-race/bet', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ horse_id: horseId, amount })
+      }).then(r=>r.json()).then(data=>{
+        if (data.success) {
+          myBets[horseId] = amount;
+          input.disabled = true;
+          btn.disabled = true;
+          btn.textContent = '베팅완료';
+          row.style.opacity = 0.7;
+          showBettingMsg(`${horses.find(h=>h.id===horseId).name}에 ${amount.toLocaleString()}원 베팅 완료!`);
+          updateMyMoney();
+        } else {
+          showBettingMsg(data.error||'베팅 실패');
+        }
+      });
+    }
+    function showBettingMsg(msg) {
+      document.getElementById('betting-message').textContent = msg;
+      setTimeout(()=>{
+        document.getElementById('betting-message').textContent = '';
+      }, 2000);
+    }
+    // 경주 캔버스 그리기
+    function clearCanvas() {
+      const canvas = document.getElementById('race-canvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+    }
+    function animateRace() {
+      const now = performance.now();
+      let t = Math.min(1, (now - animationStart) / animationDuration);
+      // 이징(베지어 느낌)
+      const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+      for (let i = 0; i < currentPositions.length; i++) {
+        currentPositions[i] = currentPositions[i] + (targetPositions[i] - currentPositions[i]) * ease;
+      }
+      // 미세 노이즈(흔들림) 추가
+      for (let i = 0; i < currentPositions.length; i++) {
+        currentPositions[i] += (Math.random()-0.5)*0.2; // 0.2% 이내 랜덤
+        currentPositions[i] = Math.max(0, Math.min(100, currentPositions[i]));
+      }
+      drawRaceCanvasWithPositions(currentPositions);
+      if (t < 1) {
+        requestAnimationFrame(animateRace);
+      } else {
+        currentPositions = [...targetPositions];
+        drawRaceCanvasWithPositions(currentPositions);
+        animating = false;
+        // 경주가 끝났고, 전체 경주시간이 15~20초보다 짧으면 마지막 위치까지 천천히 보간
+        if (raceAnimating && raceEndTime && raceStartTime) {
+          const elapsed = raceEndTime - raceStartTime;
+          if (elapsed < raceTotalDuration) {
+            // 남은 시간 동안 마지막 위치까지 천천히 애니메이션
+            const remain = raceTotalDuration - elapsed;
+            animateToFinalPositions(remain);
+            raceAnimating = false;
+          }
+        }
+      }
+    }
+    // 결승선 도달 후 남은 시간 동안 마지막 위치까지 천천히 보간
+    function animateToFinalPositions(remain) {
+      const start = performance.now();
+      const from = [...currentPositions];
+      const to = [...raceFinalPositions];
+      function step() {
+        const now = performance.now();
+        let t = Math.min(1, (now - start) / remain);
+        // 이징
+        const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+        for (let i = 0; i < currentPositions.length; i++) {
+          currentPositions[i] = from[i] + (to[i] - from[i]) * ease;
+          // 미세 노이즈
+          currentPositions[i] += (Math.random()-0.5)*0.2;
+          currentPositions[i] = Math.max(0, Math.min(100, currentPositions[i]));
+        }
+        drawRaceCanvasWithPositions(currentPositions);
+        if (t < 1) {
+          requestAnimationFrame(step);
+        } else {
+          currentPositions = [...to];
+          drawRaceCanvasWithPositions(currentPositions);
+        }
+      }
+      requestAnimationFrame(step);
+    }
+    // drawRaceCanvasWithPositions에서 이모티콘이 항상 getHorseEmoji로 그려지도록 보장
+    function drawRaceCanvasWithPositions(positions) {
+      const canvas = document.getElementById('race-canvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      // 잔디 배경 (그라데이션+노이즈)
+      const grad = ctx.createLinearGradient(0,0,0,canvas.height);
+      grad.addColorStop(0, '#3bbf3b');
+      grad.addColorStop(1, '#1e6b1e');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      for(let i=0;i<canvas.width*2;i++){
+        ctx.fillStyle = `rgba(60,180,60,${Math.random()*0.08+0.02})`;
+        ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1, 1);
+      }
+      // 트랙/레인
+      const trackH = Math.max(20, (canvas.height-40)/8-4);
+      const gap = 4;
+      const startX = 70, endX = canvas.width - 40;
+      for(let i=0;i<8;i++){
+        const y = 20 + i * (trackH + gap);
+        ctx.fillStyle = '#e0c080';
+        ctx.fillRect(startX, y, endX-startX, trackH);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(startX, y, endX-startX, trackH);
+      }
+      // 결승선
+      ctx.save();
+      ctx.strokeStyle = '#fff200';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(endX, 16);
+      ctx.lineTo(endX, canvas.height-16);
+      ctx.stroke();
+      for(let y=16;y<canvas.height-16;y+=10){
+        ctx.fillStyle = (y/10)%2===0?'#fff':'#222';
+        ctx.fillRect(endX-4, y, 8, 5);
+      }
+      ctx.restore();
+      // 말 이모티콘/이름/순위/등수 이펙트
+      (raceProgress.length ? raceProgress : horses).forEach((h, i) => {
+        const y = 20 + i * (trackH + gap) + trackH/2;
+        const x = startX + (endX-startX) * Math.min((positions[i]||0)/100,1);
+        // 등수 이펙트(1~3등)
+        if(h.rank && h.rank<=3){
+          ctx.save();
+          if(h.rank===1){ ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 32; }
+          else if(h.rank===2){ ctx.shadowColor = '#c0c0c0'; ctx.shadowBlur = 24; }
+          else if(h.rank===3){ ctx.shadowColor = '#cd7f32'; ctx.shadowBlur = 18; }
+          ctx.beginPath();
+          ctx.arc(x, y, 28, 0, 2*Math.PI);
+          ctx.strokeStyle = ctx.shadowColor;
+          ctx.lineWidth = 6;
+          ctx.globalAlpha = 0.35;
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+          ctx.restore();
+        }
+        // 등수 숫자 표시 (실시간)
+        if(h.rank){
+          ctx.save();
+          ctx.font = 'bold 1.1em DungGeunMo, monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          let bg = '#222';
+          if(h.rank===1) bg = '#ffd700';
+          else if(h.rank===2) bg = '#c0c0c0';
+          else if(h.rank===3) bg = '#cd7f32';
+          ctx.fillStyle = bg;
+          ctx.beginPath();
+          ctx.arc(x-38, y, 15, 0, 2*Math.PI);
+          ctx.fill();
+          ctx.fillStyle = h.rank<=3 ? '#111' : '#fff';
+          ctx.fillText(h.rank, x-38, y+1);
+          ctx.restore();
+        }
+        // 말 이모티콘
+        ctx.save();
+        ctx.font = '2.1em DungGeunMo, monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(getHorseEmoji(h.name), x, y);
+        ctx.restore();
+        // 이름
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 1em DungGeunMo, monospace';
+        ctx.textAlign = 'right';
+        ctx.fillText(h.name, x-24, y+6);
+        // 순위 이펙트
+        if(h.rank && h.rank<=3){
+          ctx.save();
+          ctx.font = 'bold 1.2em DungGeunMo, monospace';
+          ctx.textAlign = 'left';
+          if(h.rank===1){
+            ctx.fillStyle = '#ffd700';
+            ctx.fillText('🥇', x+22, y+8);
+          }else if(h.rank===2){
+            ctx.fillStyle = '#c0c0c0';
+            ctx.fillText('🥈', x+22, y+8);
+          }else if(h.rank===3){
+            ctx.fillStyle = '#cd7f32';
+            ctx.fillText('🥉', x+22, y+8);
+          }
+          ctx.restore();
+        }
+      });
+    }
+    // 결과 표시
+    function renderRaceResult() {
+      const el = document.getElementById('race-result');
+      if (!raceResult || !raceResult.result) { el.textContent = ''; return; }
+      const rankNames = raceResult.result.map(id => {
+        const h = raceResult.horses.find(hh=>hh.id===id);
+        return h ? h.name : id;
+      });
+      el.innerHTML = `<b>결과:</b> ${rankNames.map((n,i)=>`${i+1}등: ${n}`).join(' / ')}`;
+    }
+    // 최초 라운드 정보 fetch
+    fetch('/api/horse-race/round').then(r=>r.json()).then(data=>{
+      if (data && data.horses) {
+        roundId = data.roundId;
+        horses = data.horses;
+        betting = data.betting;
+        bettingCountdown = data.bettingCountdown;
+        renderRaceInfo();
+        renderBetPanel(true); // 최초 전체 렌더링
+      }
+    });
+    // 페이지 로딩 효과
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => document.body.classList.add('page-loaded'), 10);
+    });
+    // payout-message 손실시 흔들림 효과
+    const style = document.createElement('style');
+    style.innerHTML = `@keyframes shake { 0%{transform:translateX(0);} 20%{transform:translateX(-6px);} 40%{transform:translateX(6px);} 60%{transform:translateX(-4px);} 80%{transform:translateX(4px);} 100%{transform:translateX(0);} }`;
+    document.head.appendChild(style);
+    function showRaceModal() {
+      const modal = document.getElementById('race-modal');
+      if (!raceResult || !raceResult.result) { modal.style.display = 'none'; return; }
+      // 등수별 말 id 배열, horses: [{id, name, ...}]
+      const rankIds = raceResult.result;
+      const horsesArr = raceResult.horses;
+      // 내 베팅 정보
+      let myTotal = 0;
+      let myBetsArr = [];
+      if (typeof myBets === 'object') {
+        myBetsArr = Object.entries(myBets).map(([id, amt]) => ({ id: +id, amount: amt }));
+      }
+      // 등수별 배당(서버와 동일하게)
+      const odds = {1:2.5, 2:1.5, 3:0.0, 4:0.0, 5:0.0, 6:0.0, 7:1.0, 8:2.0};
+      // 총합 계산
+      let totalProfit = 0;
+      rankIds.forEach((id, idx) => {
+        const rank = idx+1;
+        let bet = myBetsArr.find(b=>b.id===id);
+        if (bet) {
+          let payout = 0;
+          if (odds[rank]) payout = Math.floor(bet.amount * odds[rank]);
+          totalProfit += payout - bet.amount;
+        }
+      });
+      let totalProfitStr = '';
+      if (totalProfit > 0) totalProfitStr = `<span style='color:#39ff14;font-size:1.25em;font-weight:bold;'>총 이익: +${totalProfit.toLocaleString()}원</span>`;
+      else if (totalProfit < 0) totalProfitStr = `<span style='color:#ff3c00;font-size:1.25em;font-weight:bold;'>총 손실: ${totalProfit.toLocaleString()}원</span>`;
+      else totalProfitStr = `<span style='color:#fff;font-size:1.15em;font-weight:bold;'>총 이익/손실 없음</span>`;
+      // 결과 테이블 생성
+      let html = `<div style='background:#181818e0;padding:32px 18px 24px 18px;border-radius:18px;box-shadow:0 0 32px #39ff14a0,0 0 8px #fff200;min-width:320px;max-width:90vw;text-align:center;position:relative;'>`;
+      html += `<div style='font-size:1.5em;font-weight:bold;color:#fff200;margin-bottom:10px;'>🏁 최종 결과</div>`;
+      html += `<div style='margin-bottom:12px;'>${totalProfitStr}</div>`;
+      html += `<table style='width:100%;border-collapse:separate;border-spacing:0 8px;'>`;
+      html += `<tr><th style='color:#fff;font-size:1.1em;'>등수</th><th></th><th style='color:#fff;font-size:1.1em;'>이름</th><th style='color:#fff;font-size:1.1em;'>이모지</th><th style='color:#fff;font-size:1.1em;'>이익</th></tr>`;
+      rankIds.forEach((id, idx) => {
+        const h = horsesArr.find(hh=>hh.id===id);
+        const rank = idx+1;
+        let profit = '';
+        let bet = myBetsArr.find(b=>b.id===id);
+        if (bet) {
+          let payout = 0;
+          if (odds[rank]) payout = Math.floor(bet.amount * odds[rank]);
+          let p = payout - bet.amount;
+          profit = p === 0 ? '' : (p > 0 ? `<span style='color:#39ff14;font-weight:bold;'>+${p.toLocaleString()}원</span>` : `<span style='color:#ff3c00;font-weight:bold;'>${p.toLocaleString()}원</span>`);
+        }
+        let rankColor = rank===1?'#ffd700':rank===2?'#c0c0c0':rank===3?'#cd7f32':'#fff';
+        let rankMedal = rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':'';
+        html += `<tr style='font-size:1.15em;'>`;
+        html += `<td style='color:${rankColor};font-weight:bold;'>${rankMedal||rank}</td>`;
+        html += `<td></td>`;
+        html += `<td style='color:#fff;font-weight:bold;'>${h?h.name:id}</td>`;
+        html += `<td style='font-size:1.5em;'>${h?getHorseEmoji(h.name):'🐎'}</td>`;
+        html += `<td>${profit||''}</td>`;
+        html += `</tr>`;
+      });
+      html += `</table>`;
+      html += `<div style='margin-top:18px;'><button id='close-modal-btn' style='font-size:1.1em;padding:8px 24px;background:#39ff14;color:#111;border:none;border-radius:8px;box-shadow:0 0 8px #39ff14a0;cursor:pointer;'>닫기</button></div>`;
+      html += `</div>`;
+      modal.innerHTML = html;
+      modal.style.display = 'flex';
+      // 닫기 버튼/오버레이 클릭시 닫기
+      document.getElementById('close-modal-btn').onclick = ()=>{modal.style.display='none';};
+      modal.onclick = (e)=>{if(e.target===modal)modal.style.display='none';};
+      // 8초 후 자동 닫기
+      setTimeout(()=>{modal.style.display='none';},8000);
+    }
+    // payout-info 등수별 배당 안내 제거(고정배당 안내로 대체)
+    document.getElementById('payout-info').style.display = 'none';
+  </script>
+</body>
+</html>
