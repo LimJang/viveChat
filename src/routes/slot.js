@@ -64,8 +64,17 @@ function calculateWin(symbols, betAmount) {
   return 0;
 }
 
-// 슬롯머신 플레이 API
+// 슬롯머신 플레이 API (spin과 play 둘 다 지원)
 router.post('/play', checkSession, express.json(), async (req, res) => {
+  await handleSlotPlay(req, res);
+});
+
+router.post('/spin', checkSession, express.json(), async (req, res) => {
+  await handleSlotPlay(req, res);
+});
+
+// 슬롯머신 플레이 핸들러
+async function handleSlotPlay(req, res) {
   const userId = req.session.userId;
   const amount = parseInt(req.body.amount, 10);
   
@@ -110,10 +119,19 @@ router.post('/play', checkSession, express.json(), async (req, res) => {
     console.error('Error playing slot:', error);
     res.status(500).json({ error: 'DB 오류' });
   }
+}
+
+// 슬롯머신 랭킹 (rankings와 ranking 둘 다 지원)
+router.get('/ranking', async (req, res) => {
+  await handleSlotRanking(req, res);
 });
 
-// 슬롯머신 랭킹 (최근 50회 중 높은 당첨금)
-router.get('/ranking', async (req, res) => {
+router.get('/rankings', async (req, res) => {
+  await handleSlotRanking(req, res);
+});
+
+// 슬롯머신 랭킹 핸들러
+async function handleSlotRanking(req, res) {
   try {
     const result = await pool.query(`
       SELECT u.username, s.win_amount, s.bet_amount, s.result, s.created_at
@@ -134,7 +152,7 @@ router.get('/ranking', async (req, res) => {
     console.error('Error fetching slot ranking:', error);
     res.status(500).json({ error: 'DB 오류' });
   }
-});
+}
 
 // 슬롯머신 배당표 조회
 router.get('/payouts', (req, res) => {

@@ -2,19 +2,22 @@
 
 ## Ongoing Tasks
 
-- API 라우팅 문제 수정 완료
-- 배포 준비 완료 - Git 커밋만 남음
+- 모든 API 호환성 문제 해결 완료
+- Socket.IO 연결 문제 해결 완료
+- 배포 준비 완료
 ## Known Issues
 - [Issue 1]
 - [Issue 2]
 
 ## Next Steps
 
-- Git 커밋 및 푸시하여 API 라우팅 수정사항 배포
-- Railway에서 배포 완료 후 로그인/회원가입 기능 테스트
-- 모든 게임 API 정상 작동 최종 확인
+- 수정사항 Git 푸시 및 Railway 배포
+- 배포 후 모든 게임 기능 테스트
+- 사용자 피드백 수집 및 추가 버그 수정
 ## Current Session Notes
 
+- [6:21:14 PM] [Unknown User] 프론트엔드/백엔드 호환성 문제 수정 완료: 모든 게임에서 발생한 오류들 해결: 1) 슬롯 API 엔드포인트 중복 지원 (/spin, /rankings 추가), 2) Socket.IO 스크립트 추가, 3) API 파라미터 호환성 확보. 로그인/회원가입은 이미 수정됨. 모든 게임이 정상 작동할 예정
+- [6:20:00 PM] [Unknown User] 프론트엔드 및 API 오류 분석 시작: 바카라/메인/슬롯/그래프/경마 페이지에서 다양한 오류 발생: Socket.IO 연결 문제, API 엔드포인트 404 에러, undefined 속성 접근 오류 등. 각 게임별 문제점 파악하여 해결 필요
 - [6:14:06 PM] [Unknown User] API 라우팅 경로 문제 수정: 로그인/회원가입 404 에러 해결: authRoutes를 /api/auth에서 /api로 변경하여 기존 클라이언트 요청과 일치하도록 수정. 잘못된 라우터 설정 제거.
 - [6:03:35 PM] [Unknown User] 서버 모듈화 작업 100% 완료: ViveGame 서버를 완전히 모듈화하여 유지보수성과 확장성을 대폭 향상. 새로운 구조: src/config (DB설정), src/middleware (인증), src/routes (API), src/game-logic (게임로직). 모든 4가지 게임(그래프/바카라/슬롯/경마) API 포함. PostgreSQL 연동 완료. Git 커밋 준비 완료. 기존 server.js는 server-old-backup.js로 백업
 - [6:02:22 PM] [Unknown User] 서버 구조 모듈화 완료: 단일 파일 server.js를 기능별로 완전히 분리하여 모듈화 완료. 새로운 구조: config/database.js (DB설정), middleware/auth.js (인증), routes/* (API라우터), game-logic/* (게임로직), 새로운 server-new.js (메인서버). 모든 게임 API 포함하여 완전한 서버 구조 완성
