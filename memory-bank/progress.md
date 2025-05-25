@@ -112,6 +112,7 @@
 
 ## Update History
 
+- [2025-05-25 4:16:25 PM] [Unknown User] - PostgreSQL 패키지 의존성 해결: npm install로 package-lock.json 업데이트 완료, 코드 커밋 및 푸시 완료. Railway에서 PostgreSQL 추가 대기 중
 - [2025-05-25 4:13:57 PM] [Unknown User] - PostgreSQL 연동 코드 작성 완료: SQLite를 PostgreSQL로 완전 교체. 기존 SQLite 코드를 백업하고 PostgreSQL 버전으로 교체 완료. Railway에서 PostgreSQL 추가 필요
 - [2025-05-25 4:02:39 PM] [Unknown User] - 배포 상태 확인 완료: Railway 배포 성공적으로 완료. 제3자 접속 가능, 현재 SQLite 사용 중 (로컬과 분리). 향후 PostgreSQL 연결 고려 가능
 - [2025-05-25 3:57:17 PM] [Unknown User] - Railway 배포 완료: Railway 배포 성공! 서버가 포트 8080에서 정상 실행 중. MemoryStore 경고는 있지만 기본 동작은 정상
