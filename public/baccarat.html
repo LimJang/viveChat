@@ -386,36 +386,38 @@
       document.getElementById('round-info').textContent = `라운드 #${baccaratState.round} | 베팅 타임 ${baccaratState.seconds}초`;
     }
     function updateCardsFlipped(revealed) {
-      const player = baccaratState.player;
-      const banker = baccaratState.banker;
+      const player = baccaratState.player || []; // 기본값 빈 배열
+      const banker = baccaratState.banker || []; // 기본값 빈 배열
       [1,2,3].forEach((i,idx)=>{
         const card = document.getElementById('player-card'+i);
+        if (!card) return; // 엘리먼트가 없으면 스킵
         const inner = card.querySelector('.card-inner');
         const front = card.querySelector('.card-front');
         const back = card.querySelector('.card-back');
         if(player[idx]) {
           card.style.visibility = 'visible';
-          front.textContent = player[idx];
+          if (front) front.textContent = player[idx];
         } else {
           card.style.visibility = 'hidden';
-          front.textContent = '';
+          if (front) front.textContent = '';
         }
-        if(revealed[idx]) card.classList.add('flipped');
+        if(revealed && revealed[idx]) card.classList.add('flipped');
         else card.classList.remove('flipped');
       });
       [1,2,3].forEach((i,idx)=>{
         const card = document.getElementById('banker-card'+i);
+        if (!card) return; // 엘리먼트가 없으면 스킵
         const inner = card.querySelector('.card-inner');
         const front = card.querySelector('.card-front');
         const back = card.querySelector('.card-back');
         if(banker[idx]) {
           card.style.visibility = 'visible';
-          front.textContent = banker[idx];
+          if (front) front.textContent = banker[idx];
         } else {
           card.style.visibility = 'hidden';
-          front.textContent = '';
+          if (front) front.textContent = '';
         }
-        if(revealed[3+idx]) card.classList.add('flipped');
+        if(revealed && revealed[3+idx]) card.classList.add('flipped');
         else card.classList.remove('flipped');
       });
     }
@@ -480,10 +482,10 @@
       if(data.seconds <= 0) setBettingEnabled(false);
     });
     socket.on('baccarat_result', data => {
-      baccaratState.player = data.player;
-      baccaratState.banker = data.banker;
-      baccaratState.player_point = data.player_point;
-      baccaratState.banker_point = data.banker_point;
+      baccaratState.player = data.playerCards || [];
+      baccaratState.banker = data.bankerCards || [];
+      baccaratState.player_point = data.playerPoints;
+      baccaratState.banker_point = data.bankerPoints;
       baccaratState.result = data.result;
       setBettingEnabled(false);
       updateResult(false); // 결과 숨김

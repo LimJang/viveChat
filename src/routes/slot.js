@@ -76,7 +76,7 @@ router.post('/spin', checkSession, express.json(), async (req, res) => {
 // 슬롯머신 플레이 핸들러
 async function handleSlotPlay(req, res) {
   const userId = req.session.userId;
-  const amount = parseInt(req.body.amount, 10);
+  const amount = parseInt(req.body.bet || req.body.amount, 10); // bet, amount 모두 지원
   
   if (!amount || amount < SLOT_MIN_BET || amount > SLOT_MAX_BET) {
     return res.status(400).json({ error: `베팅금액은 ${SLOT_MIN_BET}~${SLOT_MAX_BET}원` });

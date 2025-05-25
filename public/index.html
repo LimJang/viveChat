@@ -432,7 +432,11 @@
       isAdmin = !!user.is_admin;
       if (isAdmin) {
         document.getElementById('admin-panel').style.display = '';
-        document.getElementById('admin-money-btn-wrap').style.display = '';
+        // 어드민 머니 버튼 요소가 있는 경우에만 표시
+        const adminMoneyWrap = document.getElementById('admin-money-btn-wrap');
+        if (adminMoneyWrap) {
+          adminMoneyWrap.style.display = '';
+        }
       } else {
         // 일반 사용자: 본인 게임머니 표시
         fetch('/api/users/me').then(r=>r.json()).then(data=>{

@@ -19,7 +19,7 @@ router.post('/bet', checkSession, express.json(), async (req, res) => {
   
   const userId = req.session.userId;
   const betType = req.body.bet_type; // 'player', 'banker', 'tie'
-  const amount = parseInt(req.body.amount, 10);
+  const amount = parseInt(req.body.bet_amount || req.body.amount, 10); // 두 필드 모두 지원
   
   if (!['player', 'banker', 'tie'].includes(betType)) {
     return res.status(400).json({ error: '잘못된 베팅 타입' });
