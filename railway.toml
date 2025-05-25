@@ -1,0 +1,10 @@
+# Railway 배포 설정
+[build]
+  builder = "nixpacks"
+
+[deploy]
+  startCommand = "npm start"
+  restartPolicyType = "always"
+
+[env]
+  NODE_ENV = "production"

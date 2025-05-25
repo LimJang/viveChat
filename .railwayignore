@@ -1,0 +1,39 @@
+# Railway ignore file
+# Files and directories to ignore during deployment
+
+# Development files
+.env.local
+.env.development
+
+# Memory bank (will be recreated on deploy)
+memory-bank/
+
+# Local database (will use environment variable path)
+db.sqlite
+
+# Development dependencies
+node_modules/.cache/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Git files (already handled by Railway)
+.git/
+.gitignore
