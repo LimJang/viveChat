@@ -33,14 +33,17 @@ app.set('io', io);
 // 정적 파일 제공 (public 폴더)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 세션 미들웨어 설정
+// 세션 미들웨어 설정 (Railway HTTPS 프록시 대응)
 const sessionMiddleware = session({
-  secret: 'vivegame-secret',
+  secret: 'vivegame-secret-key-2025',
   resave: false,
   saveUninitialized: false,
+  name: 'vivegame.sid',
   cookie: { 
-    maxAge: 1000 * 60 * 60 * 24,
-    secure: process.env.NODE_ENV === 'production' ? false : false // Railway uses HTTPS proxy
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 7일
+    secure: false, // Railway는 HTTPS 프록시를 사용하므로 false
+    httpOnly: true,
+    sameSite: 'lax'
   }
 });
 

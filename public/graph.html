@@ -257,20 +257,35 @@
     let graphStartTime = null;
     const GRAPH_TICK_MS = 100;
     window.hasReservedBet = false;
-    // 인증 및 내 머니 표시
-    fetch('/api/me').then(async res => {
-      if (res.status !== 200) {
-        location.href = '/login.html';
-        return;
-      }
-      const user = await res.json();
-      fetch('/api/users/me').then(r=>r.json()).then(data=>{
-        if(data.money_balance!==undefined){
-          myMoney = data.money_balance;
-          document.getElementById('my-money').textContent = `보유 머니: ${myMoney.toLocaleString()}원`;
+    // 인증 및 내 머니 표시 (개선된 세션 검증)
+    async function checkAuthAndLoadMoney() {
+      try {
+        const res = await fetch('/api/me');
+        if (res.status !== 200) {
+          console.log('Authentication failed, redirecting to login');
+          location.href = '/login.html';
+          return false;
         }
-      });
-    });
+        const user = await res.json();
+        
+        // 두 번째 요청으로 머니 정보 가져오기
+        const moneyRes = await fetch('/api/users/me');
+        if(moneyRes.ok) {
+          const data = await moneyRes.json();
+          if(data.money_balance !== undefined){
+            myMoney = data.money_balance;
+            document.getElementById('my-money').textContent = `보유 머니: ${myMoney.toLocaleString()}원`;
+          }
+        }
+        return true;
+      } catch (error) {
+        console.error('Auth check error:', error);
+        location.href = '/login.html';
+        return false;
+      }
+    }
+    
+    checkAuthAndLoadMoney();
     // 페이지 로딩 효과 및 페이지 이동 트랜지션 함수
     window.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => document.body.classList.add('page-loaded'), 10);
@@ -427,16 +442,29 @@
     const style = document.createElement('style');
     style.innerHTML = `@keyframes shake { 0% { transform: translate(-50%, -50%) rotate(-2deg); } 100% { transform: translate(-50%, -50%) rotate(2deg); } }`;
     document.head.appendChild(style);
-    // 베팅
-    document.getElementById('bet-btn').onclick = function() {
+    // 베팅 (개선된 에러 처리)
+    document.getElementById('bet-btn').onclick = async function() {
       const amount = parseInt(document.getElementById('bet-amount').value,10);
-      if(!amount) return alert('베팅금액 입력');
-      fetch('/api/graph/bet', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({amount})
-      }).then(r=>r.json()).then(data=>{
-        if(data && data.reserved){
+      if(!amount || isNaN(amount)) {
+        document.getElementById('bet-status').textContent = '베팅금액을 올바르게 입력해주세요.';
+        return;
+      }
+      
+      if(amount < 1000 || amount > 100000) {
+        document.getElementById('bet-status').textContent = '베팅금액은 1,000원 ~ 100,000원 사이에서 입력해주세요.';
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/graph/bet', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({amount})
+        });
+        
+        const data = await response.json();
+        
+        if(response.ok && data && data.reserved){
           confetti({
             particleCount: 30,
             spread: 60,
@@ -464,21 +492,26 @@
             msg.style.top = '45%';
             setTimeout(() => msg.remove(), 1200);
           }, 800);
-          document.getElementById('bet-status').textContent = '베팅이 다음 라운드에 예약되었습니다.';
+          document.getElementById('bet-status').textContent = data.message || '베팅이 다음 라운드에 예약되었습니다.';
           document.getElementById('bet-btn').disabled = true;
           window.hasReservedBet = true;
-        }else{
-          alert(data.error||'베팅 실패');
-          if(data.error && data.error.includes('베팅')){
-            document.getElementById('bet-status').textContent = data.error;
+        } else {
+          // 에러 처리
+          const errorMsg = data.error || '베팅 실패';
+          document.getElementById('bet-status').textContent = errorMsg;
+          
+          // 로그인 문제인 경우 로그인 페이지로 리다이렉트
+          if(response.status === 401) {
+            setTimeout(() => {
+              alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
+              location.href = '/login.html';
+            }, 1000);
           }
         }
-      }).catch((err)=>{
-        alert(err && err.message || '베팅 실패');
-        if(err && err.message && err.message.includes('베팅')){
-          document.getElementById('bet-status').textContent = err.message;
-        }
-      });
+      } catch (err) {
+        console.error('Bet error:', err);
+        document.getElementById('bet-status').textContent = '네트워크 오류가 발생했습니다. 다시 시도해주세요.';
+      }
     };
     // 스톱
     document.getElementById('stop-btn').onclick = function() {
@@ -657,16 +690,28 @@
         });
       };
     }
-    // 자동 새로고침(5초마다)
-    setInterval(()=>{
-      fetch('/api/users/me').then(r=>r.json()).then(data=>{
-        if(data.money_balance!==undefined){
-          myMoney = data.money_balance;
-          updateMoneyBar(myMoney);
-          const myMoneyDiv = document.getElementById('my-money');
-          if(myMoneyDiv) myMoneyDiv.textContent = `보유 머니: ${myMoney.toLocaleString()}원`;
+    // 자동 새로고침(5초마다) - 세션 만료 처리 개선
+    setInterval(async ()=>{
+      try {
+        const r = await fetch('/api/users/me');
+        if(r.status === 401) {
+          console.log('Session expired during auto-refresh');
+          // 세션 만료 시 로그인 페이지로 리다이렉트
+          location.href = '/login.html';
+          return;
         }
-      });
+        if(r.ok) {
+          const data = await r.json();
+          if(data.money_balance !== undefined){
+            myMoney = data.money_balance;
+            updateMoneyBar(myMoney);
+            const myMoneyDiv = document.getElementById('my-money');
+            if(myMoneyDiv) myMoneyDiv.textContent = `보유 머니: ${myMoney.toLocaleString()}원`;
+          }
+        }
+      } catch(err) {
+        console.error('Auto-refresh error:', err);
+      }
     }, 5000);
     // 최초 머니 표시 동기화
     fetch('/api/users/me').then(r=>r.json()).then(data=>{
