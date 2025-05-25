@@ -50,16 +50,13 @@ app.use(sessionMiddleware);
 io.use(sharedSession(sessionMiddleware));
 
 // API 라우터 연결
-app.use('/api/auth', authRoutes);
+app.use('/api', authRoutes);  // /api/login, /api/register, /api/logout, /api/me
 app.use('/api/users', userRoutes);
 app.use('/api/graph', graphRoutes);
 app.use('/api/baccarat', baccaratRoutes);
 app.use('/api/slot', slotRoutes);
 app.use('/api/horse-race', horseRoutes);
 app.use('/api/admin', adminRoutes);
-
-// 기본 라우트들 (기존 API와의 호환성)
-app.get('/api/me', authRoutes);
 
 // Socket.IO 연결 처리
 handleSocketConnection(io);
