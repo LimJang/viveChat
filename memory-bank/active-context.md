@@ -2,18 +2,24 @@
 
 ## Ongoing Tasks
 
-- 메모리 뱅크 초기화 및 프로젝트 정보 업로드 완료
+- 모듈화된 서버 구조 테스트 및 검증
+- Git 커밋 준비
 ## Known Issues
 - [Issue 1]
 - [Issue 2]
 
 ## Next Steps
 
-- 프로젝트 개발 및 유지보수
-- 필요 시 새로운 기능 추가
-- 성능 최적화 및 배포 준비
+- 새로운 서버 구조를 Git에 커밋 및 푸시
+- Railway에서 배포 테스트
+- 모든 게임 API 정상 작동 확인
 ## Current Session Notes
 
+- [6:03:35 PM] [Unknown User] 서버 모듈화 작업 100% 완료: ViveGame 서버를 완전히 모듈화하여 유지보수성과 확장성을 대폭 향상. 새로운 구조: src/config (DB설정), src/middleware (인증), src/routes (API), src/game-logic (게임로직). 모든 4가지 게임(그래프/바카라/슬롯/경마) API 포함. PostgreSQL 연동 완료. Git 커밋 준비 완료. 기존 server.js는 server-old-backup.js로 백업
+- [6:02:22 PM] [Unknown User] 서버 구조 모듈화 완료: 단일 파일 server.js를 기능별로 완전히 분리하여 모듈화 완료. 새로운 구조: config/database.js (DB설정), middleware/auth.js (인증), routes/* (API라우터), game-logic/* (게임로직), 새로운 server-new.js (메인서버). 모든 게임 API 포함하여 완전한 서버 구조 완성
+- [5:57:30 PM] [Unknown User] 서버 구조 모듈화 작업 시작: 단일 파일 server.js를 기능별로 분리하여 routes, game-logic, middleware 등으로 모듈화. 유지보수성과 가독성 향상을 위한 리팩토링 진행
+- [5:56:29 PM] [Unknown User] 현재 서버 API 상황 분석 완료: server.js에는 그래프 게임 API만 있고, 바카라/슬롯/경마 게임 API가 누락된 상태. PostgreSQL 연동은 완료되었으나 모든 게임 API를 통합한 완전한 서버 파일이 필요함
+- [4:34:59 PM] [Unknown User] Nixpacks 설정 파일 강화: railway.toml, nixpacks.toml, Procfile을 모두 업데이트하여 start 명령어 인식 문제 해결 시도. PostgreSQL 환경변수는 정상 설정됨
 - [4:18:09 PM] [Unknown User] Nixpacks start 명령어 수정: nixpacks.toml을 npm start에서 node server.js로 변경, start.sh 파일 추가하여 Nixpacks 빌드 오류 해결 시도
 - [4:16:25 PM] [Unknown User] PostgreSQL 패키지 의존성 해결: npm install로 package-lock.json 업데이트 완료, 코드 커밋 및 푸시 완료. Railway에서 PostgreSQL 추가 대기 중
 - [4:13:57 PM] [Unknown User] PostgreSQL 연동 코드 작성 완료: SQLite를 PostgreSQL로 완전 교체. 기존 SQLite 코드를 백업하고 PostgreSQL 버전으로 교체 완료. Railway에서 PostgreSQL 추가 필요
