@@ -456,13 +456,18 @@
       }
       
       try {
+        console.log('Sending bet request with amount:', amount);
         const response = await fetch('/api/graph/bet', {
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify({amount})
         });
         
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
         const data = await response.json();
+        console.log('Response data:', data);
         
         if(response.ok && data && data.reserved){
           confetti({
